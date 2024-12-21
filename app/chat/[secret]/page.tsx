@@ -10,12 +10,14 @@ import { use } from 'react'
 type Message = {
   id: string;
   userId: string;
+  username: string;
   content: string;
   timestamp: number;
 }
 
 type TypingUser = {
   userId: string;
+  username: string;
   content: string;
 }
 
@@ -79,6 +81,7 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     const message: Message = {
       id: crypto.randomUUID(),
       userId: user.id,
+      username: user.user_metadata.full_name,
       content: newMessage,
       timestamp: Date.now()
     }
@@ -102,14 +105,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     supabase.channel(secret).send({
       type: 'broadcast',
       event: 'typing',
-      payload: { userId: user.id, content: e.target.value }
+      payload: { userId: user.id, username: user.user_metadata.full_name ,content: e.target.value }
     })
 
     typingTimeoutRef.current = setTimeout(() => {
       supabase.channel(secret).send({
         type: 'broadcast',
         event: 'typing',
-        payload: { userId: user.id, content: '' }
+        payload: { userId: user.id,content: '' }
       })
     }, 1000)
   }
@@ -119,12 +122,12 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
           <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
-            <span className="font-bold">{message.userId === user?.id ? 'You' : 'Other'}:</span> {message.content}
+            <span className="font-bold">{message.username}:</span> {message.content}
           </div>
         ))}
         {typingUsers.filter(u => u.userId !== user?.id && u.content).map((typingUser) => (
           <div key={typingUser.userId} className="text-gray-500 italic mb-2">
-            Someone is typing: {typingUser.content}
+            {typingUser.username}: {typingUser.content}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -144,4 +147,3 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     </>
   )
 }
-
