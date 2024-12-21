@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase } from '@/lib/supabase'
+import MorphingText from '@/components/ui/morphing-text'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleLogin = async () => {
@@ -27,8 +27,23 @@ export default function LoginPage() {
     }
   }
 
+  const texts = [
+  "Hello",
+  "Morphing",
+  "Text",
+  "Animation",
+  "React",
+  "Component",
+  "Smooth",
+  "Transition",
+  "Engaging",
+];
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex p-10">
+        <MorphingText texts={texts} />
+      </div>
       <Card className="w-[350px]">
         <CardHeader>
           <CardTitle>Welcome to Incognito Chat</CardTitle>
