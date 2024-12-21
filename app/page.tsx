@@ -30,12 +30,17 @@ export default function Home() {
     }
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   if (!user) return null
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-2xl font-bold mb-4">Hello, {user.user_metadata.full_name.split(' ')[0]}</h1>
-      <form onSubmit={handleSecretSubmit} className="w-64">
+      <form onSubmit={handleSecretSubmit} className="w-64 mb-4">
         <Input
           type="text"
           placeholder="Enter secret"
@@ -47,6 +52,9 @@ export default function Home() {
           Enter Chat Room
         </Button>
       </form>
+      <Button variant="outline" onClick={handleLogout}>
+        Logout
+      </Button>
     </div>
   )
 }

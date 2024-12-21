@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
+import { use } from 'react'
 
 type Message = {
   id: string;
@@ -18,7 +19,10 @@ type TypingUser = {
   content: string;
 }
 
-export default function ChatRoom({ params }: { params: { secret: string } }) {
+export default function ChatRoom({ params }: { params: Promise<{ secret: string }> }) {
+  const resolvedParams = use(params)
+  const secret = decodeURIComponent(resolvedParams.secret)
+  
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [user, setUser] = useState<any>(null)
@@ -38,8 +42,7 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
     }
     getUser()
 
-    const channelName = decodeURIComponent(params.secret)
-    const channel = supabase.channel(channelName)
+    const channel = supabase.channel(secret)
 
     channel
       .on('broadcast', { event: 'message' }, ({ payload }) => {
@@ -63,7 +66,7 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [params.secret, router])
+  }, [secret, router])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -80,13 +83,12 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
       timestamp: Date.now()
     }
 
-    await supabase.channel(decodeURIComponent(params.secret)).send({
+    await supabase.channel(secret).send({
       type: 'broadcast',
       event: 'message',
       payload: message
     })
 
-    // setMessages(current => [...current, message])
     setNewMessage('')
   }
 
@@ -97,14 +99,14 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
       clearTimeout(typingTimeoutRef.current)
     }
 
-    supabase.channel(decodeURIComponent(params.secret)).send({
+    supabase.channel(secret).send({
       type: 'broadcast',
       event: 'typing',
       payload: { userId: user.id, content: e.target.value }
     })
 
     typingTimeoutRef.current = setTimeout(() => {
-      supabase.channel(decodeURIComponent(params.secret)).send({
+      supabase.channel(secret).send({
         type: 'broadcast',
         event: 'typing',
         payload: { userId: user.id, content: '' }
@@ -113,14 +115,10 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Chat Room: {decodeURIComponent(params.secret)}</h1>
-        <Button variant="secondary" onClick={() => router.push('/')}>Close</Button>
-      </div>
+    <>
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((message) => (
-          <div key={message.id} className="mb-2">
+          <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
             <span className="font-bold">{message.userId === user?.id ? 'You' : 'Other'}:</span> {message.content}
           </div>
         ))}
@@ -143,7 +141,7 @@ export default function ChatRoom({ params }: { params: { secret: string } }) {
           <Button type="submit">Send</Button>
         </div>
       </form>
-    </div>
+    </>
   )
 }
 
