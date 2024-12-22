@@ -1,8 +1,7 @@
 "use client"
 
-import { ThemeProvider } from "@/components/theme-provider"
 import '@/app/globals.css'
-import LogoButton from "@/components/logo-button"
+import Logo from "@/components/logo-button"
 
 export default function AboutUs({
   children,
@@ -12,13 +11,12 @@ export default function AboutUs({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 
             {/* Logo Code */}
-            <LogoButton />
+            <Logo />
 
           {children}
-        </ThemeProvider>
+
       </body>
     </html>
   )
