@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -8,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
 import { use } from 'react'
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 type Message = {
   id: string;
@@ -16,14 +14,12 @@ type Message = {
   username: string;
   content: string;
   timestamp: number;
-  avatar_url?: string;
 }
 
 type TypingUser = {
   userId: string;
   username: string;
   content: string;
-  avatar_url?: string;
 }
 
 export default function ChatRoom({ params }: { params: Promise<{ secret: string }> }) {
@@ -79,14 +75,6 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  useEffect(() => {
-    if (document.hidden) {
-      document.title = `New message from ${messages[messages.length - 1]?.username}`
-    } else {
-      document.title = 'Chat Room'
-    }
-  }, [messages])
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !user) return
@@ -96,20 +84,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       userId: user.id,
       username: user.user_metadata.full_name,
       content: newMessage,
-      avatar_url: user.user_metadata.avatar_url,
       timestamp: Date.now()
     }
 
-    const { error } = await supabase.channel(secret).send({
+    await supabase.channel(secret).send({
       type: 'broadcast',
       event: 'message',
       payload: message
     })
-
-    if (error) {
-      console.error('Error sending message:', error)
-      return
-    }
 
     setNewMessage('')
   }
@@ -138,47 +120,15 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length > 0 ? (
-          messages.map((message) => (
-            <div 
-              key={`${message.userId}-${message.timestamp}`} 
-              className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`flex items-end space-x-2 ${message.userId === user?.id ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
-                <Avatar className="w-8 h-8">
-                    {message.avatar_url ? (
-                    <img src={message.avatar_url} alt={message.username} />
-                    ) : (
-                    <AvatarFallback>{message.username[0]}</AvatarFallback>
-                    )}
-                </Avatar>
-                <div 
-                  className={`rounded-lg p-3 max-w-[70%] ${
-                    message.userId === user?.id 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted'
-                  }`}
-                >
-                  <div className="font-semibold text-sm mb-1">{message.username}</div>
-                  <div className="text-sm break-words">{message.content}</div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center text-muted-foreground">No messages yet</div>
-        )}
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map((message) => (
+          <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
+            <span className="font-bold">{message.username}:</span> {message.content}
+          </div>
+        ))}
         {typingUsers.filter(u => u.userId !== user?.id && u.content).map((typingUser) => (
-          <div 
-            key={typingUser.userId} 
-            className="flex items-center space-x-2 text-muted-foreground text-sm italic"
-          >
-            <Avatar className="w-8 h-8">
-              <img src={typingUser.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${typingUser.username}`} alt={typingUser.username} />
-            </Avatar>
-            <span>{typingUser.username} is typing...</span>
-            <span className="animate-pulse">•••</span>
+          <div key={typingUser.userId} className="text-gray-500 italic mb-2">
+            {typingUser.username}: {typingUser.content}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -198,4 +148,3 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     </>
   )
 }
-
