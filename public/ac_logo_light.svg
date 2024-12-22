@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1080 545" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-1.24345e-14,-267.774)">
+        <g transform="matrix(1.27208,0,0,1.27208,-166.643,-88.4099)">
+            <g transform="matrix(1,0,0,1,42,-39)">
+                <path d="M643,747L391.5,319L686.5,319L938,747L643,747Z" style="fill:none;"/>
+                <clipPath id="_clip1">
+                    <path d="M643,747L391.5,319L686.5,319L938,747L643,747Z"/>
+                </clipPath>
+                <g clip-path="url(#_clip1)">
+                    <g transform="matrix(-9.31481,0,0,1,10064,-7)">
+                        <rect x="991" y="326" width="54" height="89"/>
+                    </g>
+                    <g transform="matrix(-9.31481,0,0,1,10200,332)">
+                        <rect x="991" y="326" width="54" height="89"/>
+                    </g>
+                </g>
+            </g>
+            <g transform="matrix(0.756346,0,0,0.756346,124.809,65.1978)">
+                <path d="M340.91,284L673.225,850L203.809,850L257.012,755.462L498.882,755.462L340.091,492.72L138.328,850L8.185,850L340.91,284Z" style="fill-rule:nonzero;"/>
+            </g>
+        </g>
+    </g>
+</svg>

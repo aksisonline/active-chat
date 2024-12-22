@@ -1,3 +1,5 @@
+"use client"
+
 import { ThemeProvider } from "@/components/theme-provider"
 import './globals.css'
 
@@ -9,7 +11,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        
+        <ThemeProvider attribute="class">
           {children}
         </ThemeProvider>
       </body>

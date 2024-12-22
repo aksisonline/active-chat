@@ -5,17 +5,13 @@ import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
-import { ThemeProvider } from '@/components/theme-provider'
-import { Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export default function Home() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null)
   const [secret, setSecret] = useState('')
   const router = useRouter()
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -29,9 +25,6 @@ export default function Home() {
     getUser()
   }, [router])
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const handleSecretSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,19 +41,9 @@ export default function Home() {
   if (!user) return null
 
   return (
-    <ThemeProvider attribute="class">
-      {/* Theme Switcher Button */}
+    <div>
       <div className="absolute top-4 right-4">
-        {mounted && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem] text-primary" /> : <Moon className="h-[1.2rem] w-[1.2rem] text-primary" />}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        )}
+        <ThemeSwitcher />
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
         <h1 className="text-2xl font-bold mb-4">Hello, {user.user_metadata.full_name.split(' ')[0]}</h1>
@@ -80,7 +63,7 @@ export default function Home() {
           Logout
         </Button>
       </div>
-    </ThemeProvider>
+    </div>
   )
 }
 
