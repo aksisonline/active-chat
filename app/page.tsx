@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
-import { ThemeProvider } from '@/components/theme-provider'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export default function Home() {
