@@ -79,6 +79,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  useEffect(() => {
+    if (document.hidden) {
+      document.title = `New message from ${messages[messages.length - 1]?.username}`
+    } else {
+      document.title = 'Chat Room'
+    }
+  }, [messages])
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !user) return
@@ -103,7 +111,6 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       return
     }
 
-    setMessages(current => [...current, message])
     setNewMessage('')
   }
 
