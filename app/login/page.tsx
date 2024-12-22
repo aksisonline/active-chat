@@ -13,7 +13,7 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [texts] = useState(['SECURE', 'ANONYMOUS', 'ENCRYPTED'])
+  const [texts] = useState(['SECURE', 'ACTIVE', 'BACKROOMS','SILENT', 'PRIVATE'])
 
   useEffect(() => {
     setMounted(true)
