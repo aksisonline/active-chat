@@ -3,6 +3,7 @@
 import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { ThemeProvider } from '@/components/theme-provider'
 
 export default function ChatLayout({
   children,
@@ -16,6 +17,7 @@ export default function ChatLayout({
   const router = useRouter()
 
   return (
+    <ThemeProvider>
     <div className="flex flex-col h-screen">
       <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Chat Room: {secret}</h1>
@@ -25,6 +27,7 @@ export default function ChatLayout({
       </div>
       {children}
     </div>
+    </ThemeProvider>
   )
 }
 

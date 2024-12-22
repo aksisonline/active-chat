@@ -42,8 +42,7 @@ export default function Home() {
   if (!user) return null
 
   return (
-    <ThemeProvider attribute="class">
-      {/* Theme Switcher Button */}
+    <div>
       <div className="absolute top-4 right-4">
         <ThemeSwitcher />
       </div>
@@ -65,7 +64,7 @@ export default function Home() {
           Logout
         </Button>
       </div>
-    </ThemeProvider>
+    </div>
   )
 }
 

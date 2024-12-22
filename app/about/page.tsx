@@ -3,101 +3,121 @@
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Coffee, Code, Heart } from 'lucide-react'
+import { Coffee, Code, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+
+const developers = [
+  { name: 'Karthikeya Somayajula', role: 'Frontend Architect', image: '/placeholder.svg?height=400&width=400' },
+  { name: 'S. Abhiram Kanna', role: 'Backend Innovator', image: '/placeholder.svg?height=400&width=400' },
+]
+
+const skills = [
+  { icon: <Coffee className="h-8 w-8" />, label: "Innovative Solutions" },
+  { icon: <Code className="h-8 w-8" />, label: "Cutting-edge Tech" },
+  { icon: <Zap className="h-8 w-8" />, label: "Rapid Development" }
+]
 
 export default function AboutUs() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
 
-  const developers = [
-    { name: 'Alice Wonder', role: 'Frontend Wizard', image: '/placeholder.svg?height=300&width=300' },
-    { name: 'Bob Coder', role: 'Backend Ninja', image: '/placeholder.svg?height=300&width=300' }
-  ]
-
   return (
-    <div className="min-h-screen bg-background text-foreground p-8 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 text-foreground p-4 sm:p-8 transition-all duration-300">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="absolute top-4 right-4 z-10"
+      >
+        {mounted && <ThemeSwitcher />}
+      </motion.div>
+
       <motion.h1 
-        className="text-4xl font-bold text-center mb-8"
+        className="text-4xl sm:text-5xl lg:text-6xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        Meet Our Quirky Crew!
+        Shaping the Future
       </motion.h1>
       
-      <motion.div
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="absolute top-4 right-4"
       >
-        {mounted && <ThemeSwitcher />}
-      </motion.div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {developers.map((dev, index) => (
-          <motion.div
-            key={dev.name}
-            initial={{ x: index % 2 === 0 ? -100 : 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: index * 0.2 }}
-          >
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <img src={dev.image} alt={dev.name} className="w-full h-64 object-cover filter grayscale hover:grayscale-0 transition-all duration-300" />
-                <div className="p-4">
-                  <h2 className="text-2xl font-bold">{dev.name}</h2>
-                  <p className="text-muted-foreground">{dev.role}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <TeamMember key={dev.name} developer={dev} index={index} />
         ))}
-      </div>
+      </motion.div>
 
       <motion.div 
-        className="mt-12 text-center"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mb-12"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <h2 className="text-3xl font-bold mb-4">What We Do</h2>
-        <div className="flex justify-center space-x-8">
-          <BouncyIcon icon={<Coffee className="h-12 w-12" />} label="Drink Coffee" />
-          <BouncyIcon icon={<Code className="h-12 w-12" />} label="Write Code" />
-          <BouncyIcon icon={<Heart className="h-12 w-12" />} label="Love What We Do" />
+        <h2 className="text-3xl font-bold text-center mb-8">Our Expertise</h2>
+        <div className="flex flex-wrap justify-center gap-8">
+          {skills.map((skill, index) => (
+            <SkillCard key={skill.label} skill={skill} index={index} />
+          ))}
         </div>
       </motion.div>
 
       <motion.div 
-        className="mt-12 text-center"
+        className="text-center"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
       >
-        <Button variant="secondary" size="lg">
-          Join Our Crazy Team!
+        <Button variant="secondary" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+          Join Our Visionary Team
         </Button>
       </motion.div>
     </div>
   )
 }
 
-function BouncyIcon({ icon, label }: { icon: React.ReactNode, label: string }) {
+function TeamMember({ developer, index }: { developer: { name: string, role: string, image: string }, index: number }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <div className="flex flex-col items-center">
-        {icon}
-        <span className="mt-2">{label}</span>
-      </div>
+      <Card className="overflow-hidden backdrop-blur-sm bg-background/30 border-none shadow-lg">
+        <CardContent className="p-0">
+          <img src={developer.image} alt={developer.name} className="w-full h-64 object-cover" />
+          <div className="p-4">
+            <h2 className="text-xl font-bold">{developer.name}</h2>
+            <p className="text-muted-foreground">{developer.role}</p>
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   )
 }
 
+function SkillCard({ skill, index }: { skill: { icon: React.ReactNode, label: string }, index: number }) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.1 }}
+    >
+      <Card className="w-48 h-48 flex flex-col items-center justify-center backdrop-blur-sm bg-background/30 border-none shadow-lg">
+        <CardContent>
+          {skill.icon}
+          <h3 className="mt-4 text-center font-semibold">{skill.label}</h3>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
 
