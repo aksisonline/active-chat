@@ -1,21 +1,18 @@
-"use client"
+"use client";
 
-import '@/app/globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
+import '@/app/globals.css';
 
 export default function AboutUs({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <ThemeProvider attribute="class">
       <body>
-          {children}
+        {children}
       </body>
-      </ThemeProvider>
     </html>
-  )
+  );
 }
 
