@@ -1,4 +1,6 @@
 import { use } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 
 export default function ChatLayout({
   children,
@@ -9,11 +11,15 @@ export default function ChatLayout({
 }) {
   const resolvedParams = use(params)
   const secret = decodeURIComponent(resolvedParams.secret)
+  const router = useRouter()
 
   return (
     <div className="flex flex-col h-screen">
       <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Chat Room: {secret}</h1>
+        <Button variant="secondary" onClick={() => router.push('/')}>
+          Leave Chat
+        </Button>
       </div>
       {children}
     </div>
@@ -101,6 +107,9 @@ export default function ChatLayout({
 //         <h1 className="text-xl font-bold">Chat Room: {secret}</h1>
 //         <div className="flex items-center space-x-2 relative py-2">
 //           <AnimatedTooltip items={connectedUsers} />
+//           <Button variant="secondary" onClick={() => router.push('/')}>
+//             Leave Chat
+//           </Button>
 //         </div>
 //       </div>
 //       {children}
