@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { supabase } from '@/lib/supabase'
 import MorphingText from '@/components/ui/morphing-text'
-import { Moon, Sun, Shield, Lock } from 'lucide-react'
+import { Moon, Sun, Shield, Lock, Info } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { ThemeProvider } from '@/components/theme-provider'
 import Logo from '@/components/logo-button'
+import Link from 'next/link'
 
 function LoginPageContent() {
   const [loading, setLoading] = useState(false)
@@ -41,6 +42,21 @@ function LoginPageContent() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
+      
+      {/* About Us button */}
+      <div className="absolute top-4 left-4">
+        <Link href="/about" passHref>
+          <Button
+            variant="outline"
+            size="icon"
+          >
+            <Info className="h-[1.2rem] w-[1.2rem]" />
+            <span className="sr-only">About Us</span>
+          </Button>
+        </Link>
+      </div>
+
+      {/* Theme toggle button */}
       <div className="absolute top-4 right-4">
         <Button
           variant="outline"
@@ -126,7 +142,6 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <ThemeProvider
-      attribute="class"
     >
       <LoginPageContent />
     </ThemeProvider>

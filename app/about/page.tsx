@@ -9,6 +9,7 @@ import Image from 'next/image'
 import AnimatedGridPattern from '@/components/ui/animated-grid-pattern'
 import { cn } from '@/lib/utils'
 import Logo from '@/components/logo-button'
+import { useRouter } from 'next/navigation'
 
 const developers = [
   { name: 'Karthikeya Somayajula', role: 'Frontend Architect', image: '/Team/kk.png' },
@@ -19,6 +20,14 @@ export default function AboutUs() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
+
+    const router = useRouter()
+
+    const handleClick = () => {
+        router.push("https://www.youtube.com/watch?v=xvFZjo5PgG0");
+    };
+
+
 
   return (
     <div className="min-h-screen text-foreground p-4 sm:p-8 transition-all duration-300 relative overflow-hidden">
@@ -58,7 +67,7 @@ export default function AboutUs() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.6 }}
       >
-      <Button variant="secondary" size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+      <Button variant="secondary" onClick={handleClick} size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
         Join Our Visionary Team
       </Button>
       </motion.div>
