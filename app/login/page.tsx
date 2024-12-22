@@ -8,6 +8,7 @@ import MorphingText from '@/components/ui/morphing-text'
 import { Moon, Sun, Shield, Lock, MessageSquare } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { ThemeProvider } from '@/components/theme-provider'
+import LogoButton from '@/components/logo-button'
 
 function LoginPageContent() {
   const [loading, setLoading] = useState(false)
@@ -35,6 +36,8 @@ function LoginPageContent() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col md:flex-row items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 py-8 sm:px-6 sm:py-12">
+      {/* Logo Code */}
+      <LogoButton />
       {/* Animated gradient background */}
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
