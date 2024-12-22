@@ -73,10 +73,10 @@ export default function ChatLayout({
   }, [secret])
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center px-4">
+    <div className="flex flex-col h-screen bg-background">
+      <div className="bg-primary text-primary-foreground flex justify-between items-center px-4 py-2 shadow-md">
         <h1 className="text-xl font-bold">Chat Room: {secret}</h1>
-        <div className="flex items-center space-x-2 relative">
+        <div className="flex items-center space-x-2 relative py-2">
           <AnimatedTooltip items={connectedUsers} />
         </div>
       </div>

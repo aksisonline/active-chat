@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -87,12 +86,18 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       timestamp: Date.now()
     }
 
-    await supabase.channel(secret).send({
+    const { error } = await supabase.channel(secret).send({
       type: 'broadcast',
       event: 'message',
       payload: message
     })
 
+    if (error) {
+      console.error('Error sending message:', error)
+      return
+    }
+
+    setMessages(current => [...current, message])
     setNewMessage('')
   }
 
@@ -121,11 +126,15 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   return (
     <>
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((message) => (
-          <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
-            <span className="font-bold">{message.username}:</span> {message.content}
-          </div>
-        ))}
+        {messages.length > 0 ? (
+          messages.map((message) => (
+            <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
+              <span className="font-bold">{message.username}:</span> {message.content}
+            </div>
+          ))
+        ) : (
+          <div>No messages yet</div>
+        )}
         {typingUsers.filter(u => u.userId !== user?.id && u.content).map((typingUser) => (
           <div key={typingUser.userId} className="text-gray-500 italic mb-2">
             {typingUser.username}: {typingUser.content}
