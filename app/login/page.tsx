@@ -34,7 +34,7 @@ function LoginPageContent() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80">
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 py-8 sm:px-6 sm:py-12">
       {/* Animated gradient background */}
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
@@ -52,49 +52,49 @@ function LoginPageContent() {
         </Button>
       </div>
 
-      <div className="mb-8 flex justify-center items-center w-full">
-        <MorphingText texts={texts} className="text-4xl font-bold text-primary" />
+      <div className="mb-6 sm:mb-8 flex justify-center items-center w-full">
+        <MorphingText texts={texts} className="text-2xl sm:text-4xl font-bold text-primary" />
       </div>
 
-      <Card className="relative w-full max-w-lg mx-4 bg-background/40 border-border backdrop-blur-xl">
-        <CardContent className="space-y-8 p-8">
+      <Card className="relative w-full max-w-lg mx-auto bg-background/40 border-border backdrop-blur-xl">
+        <CardContent className="space-y-6 sm:space-y-8 p-6 sm:p-8">
           {/* Logo/Icon */}
           <div className="flex justify-center">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
-              <MessageSquare size={32} />
+              <MessageSquare size={24} className="sm:size-8" />
             </div>
           </div>
 
           {/* Hero Text */}
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">
               Welcome to Active Chat
             </h1>
-            <p className="mx-auto max-w-[600px] text-muted-foreground md:text-lg">
+            <p className="mx-auto max-w-[600px] text-sm sm:text-base text-muted-foreground md:text-lg">
               Where privacy meets conversation. Secure, anonymous, and encrypted messaging for your peace of mind.
             </p>
           </div>
 
           {/* Features */}
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-3 sm:py-4">
             <div className="flex items-center space-x-2 text-muted-foreground">
-              <Shield size={16} className="text-primary" />
-              <span className="text-sm">End-to-end encrypted</span>
+              <Shield size={14} className="text-primary sm:size-4" />
+              <span className="text-xs sm:text-sm">End-to-end encrypted</span>
             </div>
             <div className="flex items-center space-x-2 text-muted-foreground">
-              <Lock size={16} className="text-primary" />
-              <span className="text-sm">100% Anonymous</span>
+              <Lock size={14} className="text-primary sm:size-4" />
+              <span className="text-xs sm:text-sm">100% Anonymous</span>
             </div>
           </div>
 
           {/* CTA Button */}
           <Button 
-            className="w-full py-6 text-lg font-medium"
+            className="w-full py-4 sm:py-6 text-base sm:text-lg font-medium"
             onClick={handleLogin}
             disabled={loading}
           >
             <div className="flex items-center justify-center space-x-2">
-              <svg className="size-5" viewBox="0 0 24 24">
+              <svg className="size-4 sm:size-5" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -117,7 +117,7 @@ function LoginPageContent() {
           </Button>
 
           {/* Terms text */}
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-[10px] sm:text-xs text-muted-foreground">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </CardContent>
