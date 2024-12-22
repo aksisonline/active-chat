@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -28,6 +27,7 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null)
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const router = useRouter()
