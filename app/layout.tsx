@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "@/components/theme-provider"
 import './globals.css'
+
 export default function RootLayout({
   children,
 }: {
@@ -11,7 +12,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class">
           {children}
         </ThemeProvider>
       </body>
