@@ -1,76 +1,47 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth'
-import { initializeApp } from 'firebase/app'
-import { getDatabase, ref, onValue, push, set } from 'firebase/database'
-import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { useState, useEffect } from 'react';
+import { getDatabase, ref, onValue, push, set } from 'firebase/database';
+import { app } from '@/lib/firebase';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const database = getDatabase(app);
 
-export default function ChatPage({ params }) {
-  const [user, setUser] = useState(null)
-  const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState([])
-  const router = useRouter()
-  const secret = params.secret
+interface ChatPageProps {
+  params: {
+    secret: string;
+  };
+}
+
+export default function ChatPage({ params }: ChatPageProps) {
+  const [user, setUser] = useState(null);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
-      } else {
-        router.push('/login')
-      }
-    })
-
-    return () => unsubscribe()
-  }, [router])
-
-  useEffect(() => {
-    const messagesRef = ref(database, `chats/${secret}`)
+    const messagesRef = ref(database, 'messages/' + params.secret);
     onValue(messagesRef, (snapshot) => {
-      const data = snapshot.val()
-      const messagesList = data ? Object.values(data) : []
-      setMessages(messagesList)
-    })
-  }, [secret])
+      const data = snapshot.val();
+      if (data) {
+        setMessages(Object.values(data));
+      }
+    });
+  }, [params.secret]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (message.trim()) {
-      const messagesRef = ref(database, `chats/${secret}`)
-      const newMessageRef = push(messagesRef)
+      const newMessageRef = push(ref(database, 'messages/' + params.secret));
       await set(newMessageRef, {
-        user: user.displayName,
-        message,
+        user: user ? user.displayName : 'Anonymous',
+        text: message,
         timestamp: Date.now(),
-      })
-      setMessage('')
+      });
+      setMessage('');
     }
-  }
-
-  const handleLogout = async () => {
-    await signOut(auth)
-    router.push('/login')
-  }
-
-  if (!user) return null
+  };
 
   return (
     <div>
@@ -78,30 +49,27 @@ export default function ChatPage({ params }) {
         <ThemeSwitcher />
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <h1 className="text-2xl font-bold mb-4">Chat Room: {secret}</h1>
+        <h1 className="text-2xl font-bold mb-4">Chat Room: {params.secret}</h1>
         <div className="w-64 mb-4">
           {messages.map((msg, index) => (
             <div key={index} className="mb-2">
-              <strong>{msg.user}:</strong> {msg.message}
+              <strong>{msg.user}:</strong> {msg.text}
             </div>
           ))}
         </div>
         <form onSubmit={handleSendMessage} className="w-64 mb-4">
           <Input
             type="text"
-            placeholder="Enter message"
+            placeholder="Enter your message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             className="mb-2"
           />
           <Button type="submit" className="w-full">
-            Send Message
+            Send
           </Button>
         </form>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
       </div>
     </div>
-  )
+  );
 }
