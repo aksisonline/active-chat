@@ -4,27 +4,38 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { supabase } from '@/lib/supabase'
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth'
+import { initializeApp } from 'firebase/app'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
 export default function Home() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState(null)
   const [secret, setSecret] = useState('')
   const router = useRouter()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user)
       } else {
         router.push('/login')
       }
-    }
-    getUser()
-  }, [router])
+    })
 
+    return () => unsubscribe()
+  }, [router])
 
   const handleSecretSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +45,7 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await signOut(auth)
     router.push('/login')
   }
 
@@ -46,7 +57,7 @@ export default function Home() {
         <ThemeSwitcher />
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <h1 className="text-2xl font-bold mb-4">Hello, {user.user_metadata.full_name.split(' ')[0]}</h1>
+        <h1 className="text-2xl font-bold mb-4">Hello, {user.displayName.split(' ')[0]}</h1>
         <form onSubmit={handleSecretSubmit} className="w-64 mb-4">
           <Input
             type="text"
@@ -66,4 +77,3 @@ export default function Home() {
     </div>
   )
 }
-

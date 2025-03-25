@@ -1,150 +1,107 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { supabase } from '@/lib/supabase'
-import { use } from 'react'
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth'
+import { initializeApp } from 'firebase/app'
+import { getDatabase, ref, onValue, push, set } from 'firebase/database'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
-type Message = {
-  id: string;
-  userId: string;
-  username: string;
-  content: string;
-  timestamp: number;
-}
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+};
 
-type TypingUser = {
-  userId: string;
-  username: string;
-  content: string;
-}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const database = getDatabase(app);
 
-export default function ChatRoom({ params }: { params: Promise<{ secret: string }> }) {
-  const resolvedParams = use(params)
-  const secret = decodeURIComponent(resolvedParams.secret)
-  
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState('')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null)
-  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
+export default function ChatPage({ params }) {
+  const [user, setUser] = useState(null)
+  const [message, setMessage] = useState('')
+  const [messages, setMessages] = useState([])
   const router = useRouter()
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const secret = params.secret
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user)
       } else {
         router.push('/login')
       }
-    }
-    getUser()
+    })
 
-    const channel = supabase.channel(secret)
-
-    channel
-      .on('broadcast', { event: 'message' }, ({ payload }) => {
-        setMessages(current => [...current, payload])
-      })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        setTypingUsers(current => {
-          const index = current.findIndex(u => u.userId === payload.userId)
-          if (index !== -1) {
-            return [
-              ...current.slice(0, index),
-              payload,
-              ...current.slice(index + 1)
-            ]
-          }
-          return [...current, payload]
-        })
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [secret, router])
+    return () => unsubscribe()
+  }, [router])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    const messagesRef = ref(database, `chats/${secret}`)
+    onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val()
+      const messagesList = data ? Object.values(data) : []
+      setMessages(messagesList)
+    })
+  }, [secret])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user) return
-
-    const message: Message = {
-      id: crypto.randomUUID(),
-      userId: user.id,
-      username: user.user_metadata.full_name,
-      content: newMessage,
-      timestamp: Date.now()
-    }
-
-    await supabase.channel(secret).send({
-      type: 'broadcast',
-      event: 'message',
-      payload: message
-    })
-
-    setNewMessage('')
-  }
-
-  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value)
-
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
-    }
-
-    supabase.channel(secret).send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { userId: user.id, username: user.user_metadata.full_name ,content: e.target.value }
-    })
-
-    typingTimeoutRef.current = setTimeout(() => {
-      supabase.channel(secret).send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { userId: user.id,content: '' }
+    if (message.trim()) {
+      const messagesRef = ref(database, `chats/${secret}`)
+      const newMessageRef = push(messagesRef)
+      await set(newMessageRef, {
+        user: user.displayName,
+        message,
+        timestamp: Date.now(),
       })
-    }, 1000)
+      setMessage('')
+    }
   }
+
+  const handleLogout = async () => {
+    await signOut(auth)
+    router.push('/login')
+  }
+
+  if (!user) return null
 
   return (
-    <>
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((message) => (
-          <div key={`${message.userId}-${message.timestamp}`} className="mb-2">
-            <span className="font-bold">{message.username}:</span> {message.content}
-          </div>
-        ))}
-        {typingUsers.filter(u => u.userId !== user?.id && u.content).map((typingUser) => (
-          <div key={typingUser.userId} className="text-gray-500 italic mb-2">
-            {typingUser.username}: {typingUser.content}
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
+    <div>
+      <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
       </div>
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
-        <div className="flex">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+        <h1 className="text-2xl font-bold mb-4">Chat Room: {secret}</h1>
+        <div className="w-64 mb-4">
+          {messages.map((msg, index) => (
+            <div key={index} className="mb-2">
+              <strong>{msg.user}:</strong> {msg.message}
+            </div>
+          ))}
+        </div>
+        <form onSubmit={handleSendMessage} className="w-64 mb-4">
           <Input
             type="text"
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="Type a message..."
-            className="flex-1 mr-2"
+            placeholder="Enter message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="mb-2"
           />
-          <Button type="submit">Send</Button>
-        </div>
-      </form>
-    </>
+          <Button type="submit" className="w-full">
+            Send Message
+          </Button>
+        </form>
+        <Button variant="outline" onClick={handleLogout}>
+          Logout
+        </Button>
+      </div>
+    </div>
   )
 }
