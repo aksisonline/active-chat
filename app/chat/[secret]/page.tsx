@@ -1,6 +1,6 @@
 'use client';
 
-// @ts-expect-error
+// @ts-expect-error: Firebase Realtime Database integration
 
 import { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue, push, set } from 'firebase/database';
