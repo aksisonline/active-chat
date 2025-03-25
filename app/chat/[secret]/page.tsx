@@ -1,6 +1,6 @@
 'use client';
 
-// @ts-ignore
+// @ts-expect-error
 
 import { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue, push, set } from 'firebase/database';
