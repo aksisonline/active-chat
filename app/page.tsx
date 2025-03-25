@@ -5,20 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth'
-import { initializeApp } from 'firebase/app'
+import { app } from '@/lib/firebase'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 export default function Home() {
   const [user, setUser] = useState(null)
@@ -26,6 +14,7 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
+    const auth = getAuth(app)
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user)
@@ -33,7 +22,6 @@ export default function Home() {
         router.push('/login')
       }
     })
-
     return () => unsubscribe()
   }, [router])
 
@@ -45,6 +33,7 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
+    const auth = getAuth(app)
     await signOut(auth)
     router.push('/login')
   }

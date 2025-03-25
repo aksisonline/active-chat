@@ -4,26 +4,13 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
-import { initializeApp } from 'firebase/app'
 import MorphingText from '@/components/ui/morphing-text'
 import { Moon, Sun, Shield, Lock, Info } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { ThemeProvider } from '@/components/theme-provider'
 import Logo from '@/components/logo-button'
 import Link from 'next/link'
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+import { app } from '@/lib/firebase'
 
 function LoginPageContent() {
   const [loading, setLoading] = useState(false)
@@ -38,11 +25,11 @@ function LoginPageContent() {
   const handleLogin = async () => {
     try {
       setLoading(true)
-      const result = await signInWithPopup(auth, provider)
-      const user = result.user
-      console.log('User signed in: ', user)
+      const auth = getAuth(app)
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
     } catch (error) {
-      console.error('Error signing in: ', error)
+      console.error('Error signing in with Google:', error)
     } finally {
       setLoading(false)
     }
