@@ -12,7 +12,7 @@ import Logo from '@/components/logo-button'
 import { useRouter } from 'next/navigation'
 
 const developers = [
-  { name: 'Karthikeya Somayajula', role: 'Frontend Architect', image: '/Team/kk.jpeg' },
+  { name: 'Karthikeya Somayajula', role: 'Frontend Architect', image: '/Team/kk.png' },
   { name: 'S. Abhiram Kanna', role: 'Backend Innovator', image: '/Team/aks.jpg' },
 ]
 

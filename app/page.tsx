@@ -4,24 +4,29 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth'
-import { app } from '@/lib/firebase'
+import { auth } from '@/lib/firebase'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 
 export default function Home() {
-  const [user, setUser] = useState(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null)
   const [secret, setSecret] = useState('')
   const router = useRouter()
 
   useEffect(() => {
-    const auth = getAuth(app)
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user)
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser)
+        // Ensure we're on the home page after login
+        if (window.location.pathname !== '/') {
+          router.push('/')
+        }
       } else {
         router.push('/login')
       }
     })
+    
     return () => unsubscribe()
   }, [router])
 
@@ -33,7 +38,6 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
-    const auth = getAuth(app)
     await signOut(auth)
     router.push('/login')
   }
@@ -46,7 +50,7 @@ export default function Home() {
         <ThemeSwitcher />
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
-        <h1 className="text-2xl font-bold mb-4">Hello, {user.displayName.split(' ')[0]}</h1>
+        <h1 className="text-2xl font-bold mb-4">Hello, {user.displayName?.split(' ')[0] || 'User'}</h1>
         <form onSubmit={handleSecretSubmit} className="w-64 mb-4">
           <Input
             type="text"
@@ -66,3 +70,4 @@ export default function Home() {
     </div>
   )
 }
+

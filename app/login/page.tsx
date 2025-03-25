@@ -1,35 +1,48 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth'
 import MorphingText from '@/components/ui/morphing-text'
 import { Moon, Sun, Shield, Lock, Info } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { ThemeProvider } from '@/components/theme-provider'
 import Logo from '@/components/logo-button'
 import Link from 'next/link'
-import { app } from '@/lib/firebase'
 
 function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [texts] = useState(['SECURE', 'ACTIVE', 'BACKROOMS','SILENT', 'PRIVATE'])
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Check authentication status on component mount
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // If user is already authenticated, redirect to home page
+      if (user) {
+        router.push('/')
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [router])
+
   const handleLogin = async () => {
     try {
       setLoading(true)
-      const auth = getAuth(app)
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
     } catch (error) {
-      console.error('Error signing in with Google:', error)
+      console.error('Error signing in with Google', error)
     } finally {
       setLoading(false)
     }
@@ -149,3 +162,4 @@ export default function LoginPage() {
     </ThemeProvider>
   )
 }
+

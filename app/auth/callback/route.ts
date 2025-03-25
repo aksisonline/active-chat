@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
       // Set a cookie with the user's ID token
       const idToken = await user.getIdToken();
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       cookieStore.set('token', idToken, { httpOnly: true });
     } catch (error) {
       console.error('Error signing in with custom token:', error);
