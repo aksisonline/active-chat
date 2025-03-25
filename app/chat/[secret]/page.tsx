@@ -11,7 +11,7 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import React from 'react';
 
 // Update database initialization with specific URL
-const database = getDatabase(app, 'https://activechat-kk-aks-default-rtdb.asia-southeast1.firebasedatabase.app/');
+const database = getDatabase(app, process.env.NEXT_PUBLIC_FIREBASE_REALTIME_DB);
 const auth = getAuth(app);
 
 interface ChatPageProps {
