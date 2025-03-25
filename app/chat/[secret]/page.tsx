@@ -1,6 +1,6 @@
 'use client';
 
-// @typescript-eslint/no-unused-vars
+// @ts-ignore
 
 import { useState, useEffect } from 'react';
 import { getDatabase, ref, onValue, push, set } from 'firebase/database';
