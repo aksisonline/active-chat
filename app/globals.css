@@ -6,6 +6,30 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Improved mobile scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better mobile text rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent horizontal scrolling on mobile */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 
 @layer base {
   :root {
