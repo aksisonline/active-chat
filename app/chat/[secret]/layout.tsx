@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { GradientAvatar } from '@/components/gradient-avatar'
 
 type User = {
   id: string;
@@ -88,8 +89,14 @@ export default function ChatLayout({
                   alt={getUserName(user)}
                 />
               )}
-              <AvatarFallback className="bg-primary-foreground text-primary text-sm font-medium">
-                {getUserName(user).charAt(0).toUpperCase()}
+              <AvatarFallback className="p-0 border-0">
+                <GradientAvatar
+                  identifier={user.id}
+                  displayName={getUserName(user)}
+                  size={40}
+                  variant="diagonal"
+                  showInitials={false}
+                />
               </AvatarFallback>
             </Avatar>
           )}

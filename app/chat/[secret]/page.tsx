@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { supabase } from '@/lib/supabase'
 import { use } from 'react'
+import { GradientAvatar } from '@/components/gradient-avatar'
 
 type Message = {
   id: string;
@@ -186,8 +187,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
                       alt={message.username}
                     />
                   )}
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                    {message.username.charAt(0).toUpperCase()}
+                  <AvatarFallback className="p-0 border-0">
+                    <GradientAvatar
+                      identifier={message.userId}
+                      displayName={message.username}
+                      size={32}
+                      variant="diagonal"
+                      showInitials={false}
+                    />
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -223,8 +230,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
                     alt={typingUser.username}
                   />
                 )}
-                <AvatarFallback className="bg-muted text-xs">
-                  {typingUser.username.charAt(0).toUpperCase()}
+                <AvatarFallback className="p-0 border-0">
+                  <GradientAvatar
+                    identifier={typingUser.userId}
+                    displayName={typingUser.username}
+                    size={24}
+                    variant="diagonal"
+                    showInitials={false}
+                  />
                 </AvatarFallback>
               </Avatar>
             </div>
