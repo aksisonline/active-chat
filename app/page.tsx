@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import Logo from '@/components/logo-button'
+import { Shortcuts } from '@/components/shortcuts'
 
 type User = {
   id: string;
@@ -25,7 +26,19 @@ type User = {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [secret, setSecret] = useState('')
+  const [initialAction, setInitialAction] = useState<string | null>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    // Check for action parameter from shortcuts
+    const urlParams = new URLSearchParams(window.location.search)
+    const action = urlParams.get('action')
+    if (action) {
+      setInitialAction(action)
+      // Clean up URL without causing navigation
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
 
   useEffect(() => {
     const getUser = async () => {
@@ -57,8 +70,26 @@ export default function Home() {
   const handleSecretSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (secret.trim()) {
+      // Add to recent channels when manually entered
+      addToRecentChannels(secret.trim())
       router.push(`/chat/${encodeURIComponent(secret)}`)
     }
+  }
+
+  const handleChannelSelect = (channelSecret: string) => {
+    router.push(`/chat/${encodeURIComponent(channelSecret)}`)
+  }
+
+  const addToRecentChannels = (secret: string) => {
+    const recentChannels = JSON.parse(localStorage.getItem('recentChannels') || '[]')
+    const newChannel = {
+      secret,
+      name: secret,
+      lastVisited: Date.now()
+    }
+    const existing = recentChannels.filter((ch: { secret: string }) => ch.secret !== secret)
+    const updated = [newChannel, ...existing].slice(0, 5)
+    localStorage.setItem('recentChannels', JSON.stringify(updated))
   }
 
   const handleLogout = async () => {
@@ -80,7 +111,7 @@ export default function Home() {
         <ThemeSwitcher />
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-2xl space-y-6">
           <div className="text-center space-y-4">
             <Logo className="mx-auto" />
             <div>
@@ -93,25 +124,31 @@ export default function Home() {
             </div>
           </div>
           
-          <form onSubmit={handleSecretSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="secret" className="block text-sm font-medium mb-2">
-                Chat Room Secret
-              </label>
-              <Input
-                id="secret"
-                type="text"
-                placeholder="Enter secret"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                className="w-full"
-                autoComplete="off"
-              />
-            </div>
-            <Button type="submit" className="w-full" size="lg">
-              Enter Chat Room
-            </Button>
-          </form>
+          {/* Shortcuts Component */}
+          <Shortcuts onChannelSelect={handleChannelSelect} initialAction={initialAction} />
+          
+          {/* Chat Room Entry Form */}
+          <div className="pt-4 border-t">
+            <form onSubmit={handleSecretSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="secret" className="block text-sm font-medium mb-2">
+                  Create or join a chat room
+                </label>
+                <Input
+                  id="secret"
+                  type="text"
+                  placeholder="Enter or create a room secret"
+                  value={secret}
+                  onChange={(e) => setSecret(e.target.value)}
+                  className="w-full"
+                  autoComplete="off"
+                />
+              </div>
+              <Button type="submit" className="w-full" size="lg">
+                Enter Chat Room
+              </Button>
+            </form>
+          </div>
           
           <div className="pt-4">
             <Button 

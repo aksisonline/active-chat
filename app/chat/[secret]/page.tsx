@@ -53,6 +53,18 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const addToRecentChannels = (secret: string) => {
+    const recentChannels = JSON.parse(localStorage.getItem('recentChannels') || '[]')
+    const newChannel = {
+      secret,
+      name: secret,
+      lastVisited: Date.now()
+    }
+    const existing = recentChannels.filter((ch: { secret: string }) => ch.secret !== secret)
+    const updated = [newChannel, ...existing].slice(0, 5)
+    localStorage.setItem('recentChannels', JSON.stringify(updated))
+  }
+
   useEffect(() => {
     const getUser = async () => {
       // First check for anonymous user
@@ -60,6 +72,8 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       if (anonymousUserData) {
         const anonymousUser = JSON.parse(anonymousUserData);
         setUser(anonymousUser);
+        // Add to recent channels when user enters a chat room
+        addToRecentChannels(secret);
         return;
       }
 
@@ -67,6 +81,8 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
+        // Add to recent channels when user enters a chat room
+        addToRecentChannels(secret);
       } else {
         router.push('/login')
       }
