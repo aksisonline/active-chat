@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import MorphingText from "@/components/ui/morphing-text";
-import { Shield, Lock, Info, User, Eye, EyeOff } from "lucide-react";
+import { Shield, Lock, Info, User } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Logo from "@/components/logo-button";
 import Link from "next/link";
@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [isAnonymousMode, setIsAnonymousMode] = useState(false);
   const [anonymousName, setAnonymousName] = useState("");
   const [chatSecret, setChatSecret] = useState("");
-  const [showSecret, setShowSecret] = useState(false);
   const router = useRouter();
   const [texts] = useState([
     "SECURE",
@@ -208,30 +207,15 @@ export default function LoginPage() {
                     <label htmlFor="secret" className="text-sm font-medium">
                       Chat Room Secret
                     </label>
-                    <div className="relative">
-                      <Input
-                        id="secret"
-                        type={showSecret ? "text" : "password"}
-                        placeholder="Enter chat room secret"
-                        value={chatSecret}
-                        onChange={(e) => setChatSecret(e.target.value)}
-                        maxLength={100}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowSecret(!showSecret)}
-                      >
-                        {showSecret ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <Input
+                      id="secret"
+                      type="text"
+                      placeholder="Enter chat room secret"
+                      value={chatSecret}
+                      onChange={(e) => setChatSecret(e.target.value)}
+                      maxLength={100}
+                      required
+                    />
                   </div>
                   
                   <Button
