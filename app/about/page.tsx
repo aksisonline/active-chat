@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from 'react'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { CardBody, CardContainer, CardItem } from '@/components/ui/3d-card'
 import Image from 'next/image'
@@ -17,9 +16,6 @@ const developers = [
 ]
 
 export default function AboutUs() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
 
     const router = useRouter()
 
@@ -30,7 +26,7 @@ export default function AboutUs() {
 
 
   return (
-    <div className="min-h-screen text-foreground p-4 sm:p-8 transition-all duration-300 relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 transition-all duration-300 relative overflow-hidden">
       <AnimatedGridPattern
       numSquares={90}
       maxOpacity={0.1}
@@ -41,13 +37,25 @@ export default function AboutUs() {
         "absolute inset-0 w-full skew-y-7",
       )}
       />
+      
+      {/* Logo */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="absolute top-4 left-4 z-10"
+      >
+        <Logo className="w-8 h-8 sm:w-10 sm:h-10" />
+      </motion.div>
+      
+      {/* Theme Switcher */}
       <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="absolute top-4 right-4 z-10"
       >
-      {mounted && <ThemeSwitcher />}
+      <ThemeSwitcher />
       </motion.div>
       
       <motion.div 
@@ -81,10 +89,10 @@ function TeamMember({ developer, index }: { developer: { name: string, role: str
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="relative"
     >
-      <Logo className="absolute top-0 left-0"/>
       <CardContainer className="inter-var">
-      <CardBody className="bg-background relative group/card dark:hover:shadow-2xl dark:hover:shadow-primary/10 dark:bg-background dark:border-primary/20 border-primary/10 w-auto sm:w-[30rem] h-auto rounded-xl p-6 border">
+      <CardBody className="bg-background relative group/card hover:shadow-2xl hover:shadow-primary/10 border-border w-auto sm:w-[30rem] h-auto rounded-xl p-6 border">
         <CardItem
           translateZ="50"
           className="text-xl font-bold text-foreground"

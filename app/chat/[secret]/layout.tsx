@@ -3,7 +3,8 @@
 import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { ThemeProvider } from '@/components/theme-provider'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { Home } from 'lucide-react'
 
 export default function ChatLayout({
   children,
@@ -17,17 +18,29 @@ export default function ChatLayout({
   const router = useRouter()
 
   return (
-    <ThemeProvider>
     <div className="flex flex-col h-screen">
-      <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Chat Room: {secret}</h1>
-        <Button variant="secondary" onClick={() => router.push('/')}>
-          Leave Chat
-        </Button>
+      <div className="bg-primary text-primary-foreground p-3 sm:p-4 flex justify-between items-center shadow-md">
+        <h1 className="text-lg sm:text-xl font-bold truncate mr-2 flex-1">
+          <span className="hidden sm:inline">Chat Room: </span>
+          <span className="sm:hidden">Room: </span>
+          <span className="font-mono">{secret}</span>
+        </h1>
+        <div className="flex items-center gap-2">
+          <ThemeSwitcher />
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={() => router.push('/')}
+            className="flex items-center gap-1 sm:gap-2"
+          >
+            <Home className="h-4 w-4" />
+            <span className="hidden sm:inline">Leave Chat</span>
+            <span className="sm:hidden">Exit</span>
+          </Button>
+        </div>
       </div>
       {children}
     </div>
-    </ThemeProvider>
   )
 }
 

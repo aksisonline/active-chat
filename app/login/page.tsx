@@ -1,39 +1,43 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { supabase } from '@/lib/supabase'
-import MorphingText from '@/components/ui/morphing-text'
-import { Moon, Sun, Shield, Lock, Info } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { ThemeProvider } from '@/components/theme-provider'
-import Logo from '@/components/logo-button'
-import Link from 'next/link'
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import MorphingText from "@/components/ui/morphing-text";
+import { Shield, Lock, Info } from "lucide-react";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import Logo from "@/components/logo-button";
+import Link from "next/link";
 
-function LoginPageContent() {
-  const [loading, setLoading] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const [texts] = useState(['SECURE', 'ACTIVE', 'BACKROOMS','SILENT', 'PRIVATE'])
+export default function LoginPage() {
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [texts] = useState([
+    "SECURE",
+    "ACTIVE",
+    "BACKROOMS",
+    "SILENT",
+    "PRIVATE",
+  ]);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   const handleLogin = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-      })
-      if (error) throw error
+        provider: "google",
+      });
+      if (error) throw error;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!mounted) return null
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen w-full relative flex flex-col md:flex-row items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 py-8 sm:px-6 sm:py-12">
@@ -42,14 +46,11 @@ function LoginPageContent() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
-      
+
       {/* About Us button */}
       <div className="absolute top-4 left-4">
         <Link href="/about" passHref>
-          <Button
-            variant="outline"
-            size="icon"
-          >
+          <Button variant="outline" size="icon">
             <Info className="h-[1.2rem] w-[1.2rem]" />
             <span className="sr-only">About Us</span>
           </Button>
@@ -58,24 +59,20 @@ function LoginPageContent() {
 
       {/* Theme toggle button */}
       <div className="absolute top-4 right-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
-          {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem]" /> : <Moon className="h-[1.2rem] w-[1.2rem]" />}
-          <span className="sr-only">Toggle theme</span>
-        </Button>
+        <ThemeSwitcher />
       </div>
 
       <div className="mb-6 sm:mb-8 flex justify-center items-center w-full">
-        <MorphingText texts={texts} className="text-2xl sm:text-4xl font-bold text-primary" />
+        <MorphingText
+          texts={texts}
+          className="text-2xl sm:text-4xl font-bold text-primary"
+        />
       </div>
 
       <Card className="relative w-full max-w-lg mx-auto bg-background/40 border-border backdrop-blur-xl">
         <CardContent className="space-y-6 sm:space-y-8 p-6 sm:p-8">
           <div className="flex justify-center top-0 left-0 p-5">
-              <Logo className="sm:size-15" />
+            <Logo className="sm:size-15" />
           </div>
 
           {/* Hero Text */}
@@ -84,7 +81,8 @@ function LoginPageContent() {
               Welcome to Active Chat
             </h1>
             <p className="mx-auto max-w-[600px] text-sm sm:text-base text-muted-foreground md:text-lg">
-              Where privacy meets conversation. Secure, Anonymous, Serverless messaging for your peace of mind.
+              Where privacy meets conversation. Secure, Anonymous, Serverless
+              messaging for your peace of mind.
             </p>
           </div>
 
@@ -92,7 +90,9 @@ function LoginPageContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-3 sm:py-4">
             <div className="flex items-center space-x-2 text-muted-foreground">
               <Shield size={14} className="text-primary sm:size-4" />
-              <span className="text-xs sm:text-sm">Privacy without Conditions</span>
+              <span className="text-xs sm:text-sm">
+                Privacy without Conditions
+              </span>
             </div>
             <div className="flex items-center space-x-2 text-muted-foreground">
               <Lock size={14} className="text-primary sm:size-4" />
@@ -101,7 +101,7 @@ function LoginPageContent() {
           </div>
 
           {/* CTA Button */}
-          <Button 
+          <Button
             className="w-full py-4 sm:py-6 text-base sm:text-lg font-medium"
             onClick={handleLogin}
             disabled={loading}
@@ -125,7 +125,7 @@ function LoginPageContent() {
                   fill="#EA4335"
                 />
               </svg>
-              <span>{loading ? 'Loading...' : 'Sign in with Google'}</span>
+              <span>{loading ? "Loading..." : "Sign in with Google"}</span>
             </div>
           </Button>
 
@@ -136,15 +136,5 @@ function LoginPageContent() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-
-export default function LoginPage() {
-  return (
-    <ThemeProvider
-    >
-      <LoginPageContent />
-    </ThemeProvider>
-  )
-}
-

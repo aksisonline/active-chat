@@ -1,32 +1,28 @@
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { Button } from "./ui/button";
 
 export function ThemeSwitcher() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <Button variant="outline" size="icon" style={{ color: "transparent", filter: "invert(100%)" }}>
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-    );
-  }
+  const { setTheme, resolvedTheme, theme } = useTheme();
+  // fallback to system if resolvedTheme is undefined (hydration)
+  const currentTheme = resolvedTheme || theme || 'system';
+  const isDark = currentTheme === 'dark';
 
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="transition-colors"
     >
-      {theme === 'dark' ? <Sun className="h-[1.2rem] w-[1.2rem] text-primary" /> : <Moon className="h-[1.2rem] w-[1.2rem] text-primary" />}
-      <span className="sr-only">Toggle theme</span>
+      {isDark ? (
+        <Sun className="h-4 w-4 text-primary transition-transform duration-200 hover:rotate-12" />
+      ) : (
+        <Moon className="h-4 w-4 text-primary transition-transform duration-200 hover:-rotate-12" />
+      )}
+      <span className="sr-only">
+        Switch to {isDark ? 'light' : 'dark'} mode
+      </span>
     </Button>
   );
 }
