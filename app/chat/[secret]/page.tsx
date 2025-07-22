@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { supabase } from '@/lib/supabase'
 import { use } from 'react'
 
@@ -13,12 +14,30 @@ type Message = {
   username: string;
   content: string;
   timestamp: number;
+  avatar?: string;
+  isAnonymous?: boolean;
 }
 
 type TypingUser = {
   userId: string;
   username: string;
   content: string;
+  avatar?: string;
+  isAnonymous?: boolean;
+}
+
+type User = {
+  id: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+    picture?: string;
+  };
+} | {
+  id: string;
+  name: string;
+  isAnonymous: true;
+  avatar: string | null;
 }
 
 export default function ChatRoom({ params }: { params: Promise<{ secret: string }> }) {
@@ -27,8 +46,7 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -36,6 +54,15 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
 
   useEffect(() => {
     const getUser = async () => {
+      // First check for anonymous user
+      const anonymousUserData = localStorage.getItem('anonymousUser');
+      if (anonymousUserData) {
+        const anonymousUser = JSON.parse(anonymousUserData);
+        setUser(anonymousUser);
+        return;
+      }
+
+      // Then check for authenticated user
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
@@ -75,6 +102,18 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  const getUserName = (user: User | null): string => {
+    if (!user) return 'Unknown';
+    if ('isAnonymous' in user) return user.name;
+    return user.user_metadata?.full_name || 'Unknown User';
+  };
+
+  const getUserAvatar = (user: User | null): string | undefined => {
+    if (!user) return undefined;
+    if ('isAnonymous' in user) return user.avatar || undefined;
+    return user.user_metadata?.avatar_url || user.user_metadata?.picture;
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !user) return
@@ -82,9 +121,11 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     const message: Message = {
       id: crypto.randomUUID(),
       userId: user.id,
-      username: user.user_metadata.full_name,
+      username: getUserName(user),
       content: newMessage,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      avatar: getUserAvatar(user),
+      isAnonymous: 'isAnonymous' in user ? user.isAnonymous : false
     }
 
     await supabase.channel(secret).send({
@@ -99,6 +140,8 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value)
 
+    if (!user) return;
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
@@ -106,14 +149,20 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     supabase.channel(secret).send({
       type: 'broadcast',
       event: 'typing',
-      payload: { userId: user.id, username: user.user_metadata.full_name ,content: e.target.value }
+      payload: { 
+        userId: user.id, 
+        username: getUserName(user),
+        content: e.target.value,
+        avatar: getUserAvatar(user),
+        isAnonymous: 'isAnonymous' in user ? user.isAnonymous : false
+      }
     })
 
     typingTimeoutRef.current = setTimeout(() => {
       supabase.channel(secret).send({
         type: 'broadcast',
         event: 'typing',
-        payload: { userId: user.id,content: '' }
+        payload: { userId: user.id, content: '' }
       })
     }, 1000)
   }
@@ -129,13 +178,26 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
         {messages.map((message) => (
           <div key={`${message.userId}-${message.timestamp}`} className="space-y-1">
             <div className="flex items-start gap-2 sm:gap-3">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                {message.username.charAt(0).toUpperCase()}
+              <div className="flex-shrink-0">
+                <Avatar className="w-8 h-8">
+                  {message.avatar && (
+                    <AvatarImage 
+                      src={message.avatar} 
+                      alt={message.username}
+                    />
+                  )}
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                    {message.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="font-semibold text-sm sm:text-base truncate">
                     {message.username}
+                    {message.isAnonymous && (
+                      <span className="ml-1 text-xs text-muted-foreground">(Guest)</span>
+                    )}
                   </span>
                   <span className="text-xs text-muted-foreground flex-shrink-0">
                     {new Date(message.timestamp).toLocaleTimeString([], { 
@@ -153,11 +215,24 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
         ))}
         {typingUsers.filter(u => u.userId !== user?.id && u.content).map((typingUser) => (
           <div key={typingUser.userId} className="flex items-center gap-2 text-muted-foreground italic text-sm">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs">
-              {typingUser.username.charAt(0).toUpperCase()}
+            <div className="flex-shrink-0">
+              <Avatar className="w-6 h-6">
+                {typingUser.avatar && (
+                  <AvatarImage 
+                    src={typingUser.avatar} 
+                    alt={typingUser.username}
+                  />
+                )}
+                <AvatarFallback className="bg-muted text-xs">
+                  {typingUser.username.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             </div>
             <span className="truncate">
-              {typingUser.username} is typing: {typingUser.content}
+              {typingUser.username}
+              {typingUser.isAnonymous && (
+                <span className="ml-1 text-xs">(Guest)</span>
+              )} is typing: {typingUser.content}
             </span>
           </div>
         ))}

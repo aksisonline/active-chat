@@ -6,15 +6,38 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { supabase } from '@/lib/supabase'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import Logo from '@/components/logo-button'
+
+type User = {
+  id: string;
+  user_metadata?: {
+    full_name?: string;
+    avatar_url?: string;
+    picture?: string;
+  };
+} | {
+  id: string;
+  name: string;
+  isAnonymous: true;
+  avatar: string | null;
+}
 
 export default function Home() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [secret, setSecret] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     const getUser = async () => {
+      // Check for anonymous user first
+      const anonymousUserData = localStorage.getItem('anonymousUser');
+      if (anonymousUserData) {
+        const anonymousUser = JSON.parse(anonymousUserData);
+        setUser(anonymousUser);
+        return;
+      }
+
+      // Then check for authenticated user
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
@@ -25,6 +48,11 @@ export default function Home() {
     getUser()
   }, [router])
 
+  const getUserName = (user: User | null): string => {
+    if (!user) return 'Unknown';
+    if ('isAnonymous' in user) return user.name;
+    return user.user_metadata?.full_name || 'Unknown User';
+  };
 
   const handleSecretSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +62,13 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (user && 'isAnonymous' in user) {
+      // For anonymous users, just clear localStorage
+      localStorage.removeItem('anonymousUser');
+    } else {
+      // For authenticated users, sign out from Supabase
+      await supabase.auth.signOut();
+    }
     router.push('/login')
   }
 
@@ -47,13 +81,16 @@ export default function Home() {
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8">
         <div className="w-full max-w-md space-y-6">
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              Welcome back!
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Hello, {user.user_metadata.full_name.split(' ')[0]}
-            </p>
+          <div className="text-center space-y-4">
+            <Logo className="mx-auto" />
+            <div>
+              <h1 className="text-2xl font-bold">Welcome, {getUserName(user)}!</h1>
+              {user && 'isAnonymous' in user && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  You&apos;re chatting as a guest
+                </p>
+              )}
+            </div>
           </div>
           
           <form onSubmit={handleSecretSubmit} className="space-y-4">

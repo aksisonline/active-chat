@@ -11,6 +11,10 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  return NextResponse.redirect(requestUrl.origin)
+  // Clear any anonymous user data when authenticating with OAuth
+  const response = NextResponse.redirect(requestUrl.origin)
+  response.headers.set('Clear-Site-Data', '"storage"')
+  
+  return response
 }
 
