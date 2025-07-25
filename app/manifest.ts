@@ -26,15 +26,13 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/ac_logo_dark.svg',
         sizes: 'any',
         type: 'image/svg+xml',
-        purpose: 'any',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'any'
       },
       {
         src: '/ac_logo_light.svg',
         sizes: 'any',
         type: 'image/svg+xml',
-        purpose: 'any',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'any'
       },
       
       // Fallback for platforms that need specific sizes
@@ -43,15 +41,13 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/ac_logo_dark.svg',
         sizes: '192x192',
         type: 'image/svg+xml',
-        purpose: 'any',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'any'
       },
       {
         src: '/ac_logo_dark.svg',
         sizes: '512x512',
         type: 'image/svg+xml',
-        purpose: 'any',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'any'
       },
       
       // Maskable icon (for Android adaptive icons)
@@ -59,15 +55,13 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/ac_logo_dark.svg',
         sizes: '192x192',
         type: 'image/svg+xml',
-        purpose: 'maskable',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'maskable'
       },
       {
         src: '/ac_logo_dark.svg',
         sizes: '512x512',
         type: 'image/svg+xml',
-        purpose: 'maskable',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'maskable'
       },
       
       // light icon for notification badges
@@ -75,8 +69,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/ac_logo_light.svg',
         sizes: 'any',
         type: 'image/svg+xml',
-        purpose: 'monochrome',
-        background_color: '#000000' // Black background for white logo
+        purpose: 'monochrome'
       }
     ],
     
@@ -117,8 +110,7 @@ export default function manifest(): MetadataRoute.Manifest {
           {
             src: '/shortcut-create.svg',
             sizes: '96x96',
-            type: 'image/svg+xml',
-            background_color: '#000000' // Black background for white icon
+            type: 'image/svg+xml'
           }
         ]
       },
@@ -131,8 +123,7 @@ export default function manifest(): MetadataRoute.Manifest {
           {
             src: '/shortchut-join.svg',
             sizes: '96x96',
-            type: 'image/svg+xml',
-            background_color: '#000000' // Black background for white icon
+            type: 'image/svg+xml'
           }
         ]
       }
