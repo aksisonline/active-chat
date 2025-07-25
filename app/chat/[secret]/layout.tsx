@@ -78,7 +78,7 @@ export default function ChatLayout({
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-[100dvh] overflow-hidden">
       <div className="bg-primary text-primary-foreground p-3 sm:p-4 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           {user && (
