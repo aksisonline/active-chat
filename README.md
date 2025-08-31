@@ -2,21 +2,22 @@
 
 **Where privacy meets conversation. Secure, Anonymous, Serverless messaging for your peace of mind.**
 
-Active Chat is a modern, privacy-focused real-time messaging application that allows users to create and join private chat rooms without compromising their personal information. Built with cutting-edge web technologies, it offers both anonymous and authenticated messaging experiences.
+Active Chat is a revolutionary messaging platform that prioritizes your privacy above all else. Unlike traditional chat applications, we don't store your messages on any server - everything happens in real-time through secure broadcasts that disappear the moment you close your browser. It's simple, secure, and surprisingly fun.
 
 ## ✨ Key Features
 
-### 🔒 **Privacy First**
-- **Anonymous Messaging**: Chat without creating an account
-- **No Data Persistence**: Messages are not stored permanently
-- **Private Room Secrets**: Access rooms only with the secret key
-- **Optional Authentication**: Sign in with Google for persistent identity
+### 🔒 **Zero-Storage Security**
+- **No Message Storage**: Your conversations never touch a database - messages are broadcast live and vanish when you leave
+- **Serverless Architecture**: Our realtime server only forwards messages between users, never saving them
+- **Anonymous Messaging**: Chat without creating an account or revealing personal information
+- **Private Room Access**: Rooms are protected by secret keys that you control
+- **Instant Deletion**: Close your browser and your messages are gone forever
 
 ### 💬 **Real-time Communication**
-- **Instant Messaging**: Real-time message delivery using Supabase
-- **Typing Indicators**: See when others are typing
-- **User Presence**: Know who's currently online in the room
-- **Mobile Responsive**: Optimized for all device sizes
+- **Instant Message Delivery**: Messages appear immediately through secure realtime broadcasting
+- **Live User Presence**: See who's currently online in your room
+- **Interactive Messaging**: Experience the magic of truly live conversations
+- **Mobile Responsive**: Secure chatting on any device, anywhere
 
 ### 🎨 **Modern UI/UX**
 - **Dynamic Gradient Avatars**: Unique, colorful profile icons generated deterministically
@@ -93,10 +94,11 @@ Active Chat is a modern, privacy-focused real-time messaging application that al
 - **[Radix UI](https://www.radix-ui.com/)** - Accessible component primitives
 
 ### Backend & Services
-- **[Supabase](https://supabase.com/)** - Backend-as-a-Service
-  - Real-time subscriptions
-  - Authentication (Google OAuth)
-  - Database (PostgreSQL)
+- **[Supabase](https://supabase.com/)** - Realtime Broadcasting Only
+  - Live message broadcasting (no storage)
+  - User presence detection
+  - Optional authentication (Google OAuth)
+  - Zero message persistence
 - **[Vercel](https://vercel.com/)** - Deployment platform
 
 ### Development Tools
@@ -143,10 +145,11 @@ For detailed documentation, see [Gradient Avatars Guide](docs/GRADIENT_AVATARS.m
 *Clean, modern interface with dark/light theme support*
 
 ### Key Features Demo
-- **🔐 Anonymous Access**: Chat without creating an account
-- **🎨 Dynamic Avatars**: Unique gradient avatars for every user
+- **🔐 Zero-Storage Security**: Messages never hit a database - pure realtime broadcasting
+- **🚫 No Message Persistence**: Your conversations disappear when you close the browser
+- **🎨 Dynamic Avatars**: Beautiful gradient avatars generated without storing images
 - **🌓 Theme Support**: Seamless dark/light mode switching
-- **📱 Mobile Ready**: Responsive design for all devices
+- **📱 Mobile Ready**: Secure chatting on all devices
 
 ## 🔧 Configuration
 
@@ -158,9 +161,11 @@ For detailed documentation, see [Gradient Avatars Guide](docs/GRADIENT_AVATARS.m
 
 ### Supabase Setup
 1. Create a new Supabase project
-2. Enable Google OAuth in Authentication settings
-3. Set up real-time subscriptions for chat functionality
-4. Configure your domain in the OAuth settings
+2. Enable Google OAuth in Authentication settings (optional)
+3. Enable realtime broadcasting for chat functionality
+4. Configure your domain in the OAuth settings (if using authentication)
+
+**Note**: Active Chat only uses Supabase for realtime broadcasting and optional authentication. No messages are stored in the database - everything happens through live broadcasts that don't persist.
 
 ## 🚢 Deployment
 
@@ -203,10 +208,10 @@ active-chat/
 ## 🎯 Core Components
 
 ### Chat System
-- **Real-time messaging** with Supabase subscriptions
-- **Room-based architecture** with secret-based access
-- **User presence tracking** and typing indicators
-- **Message persistence** during session (not stored permanently)
+- **Zero-storage messaging** with Supabase realtime broadcasting only
+- **Room-based architecture** with secret-based access control
+- **Live user presence** and interactive communication features  
+- **Ephemeral conversations** - messages exist only while you're connected
 
 ### Authentication
 - **Dual-mode system**: Anonymous and Google OAuth
@@ -223,10 +228,12 @@ active-chat/
 
 ### Supabase Integration
 ```typescript
-// Real-time message subscription
+// Real-time message broadcasting (no storage)
 const channel = supabase
   .channel(`chat:${roomSecret}`)
   .on('broadcast', { event: 'message' }, (payload) => {
+    // Messages are received live and displayed immediately
+    // No database storage - pure realtime broadcasting
     setMessages(prev => [...prev, payload.message])
   })
   .subscribe()
