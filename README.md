@@ -282,7 +282,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👥 Team
 
 ### Core Contributors
-- **[Karthikeya Somayajula](https://github.com/aksisonline)** - Frontend Architect
+- **[Karthikeya Somayajula](https://github.com/RetardRento)** - Frontend Architect
 - **[S. Abhiram Kanna](https://github.com/aksisonline)** - Backend Innovator
 
 ## 🙏 Acknowledgments
