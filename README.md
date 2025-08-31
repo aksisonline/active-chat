@@ -2,7 +2,7 @@
 
 **Where privacy meets conversation. Secure, Anonymous, Serverless messaging for your peace of mind.**
 
-Active Chat is a revolutionary messaging platform that prioritizes your privacy above all else. Unlike traditional chat applications, we don't store your messages on any server - everything happens in real-time through secure broadcasts that disappear the moment you close your browser. It's simple, secure, and surprisingly fun.
+Active Chat is a super simple messaging platform that prioritizes your privacy above all else. Unlike traditional chat applications, we don't store your messages on any server - everything happens in real-time through secure broadcasts that disappear the moment you close your browser. It's simple, secure, and surprisingly fun.
 
 ## ✨ Key Features
 
@@ -18,18 +18,6 @@ Active Chat is a revolutionary messaging platform that prioritizes your privacy 
 - **Live User Presence**: See who's currently online in your room
 - **Interactive Messaging**: Experience the magic of truly live conversations
 - **Mobile Responsive**: Secure chatting on any device, anywhere
-
-### 🎨 **Modern UI/UX**
-- **Dynamic Gradient Avatars**: Unique, colorful profile icons generated deterministically
-- **Dark/Light Theme**: Seamless theme switching
-- **Smooth Animations**: Built with Framer Motion for delightful interactions
-- **Accessible Design**: WCAG compliant interface
-
-### 🛠 **Developer Friendly**
-- **TypeScript**: Fully typed for better development experience
-- **Component Library**: Built with Radix UI and Tailwind CSS
-- **Modern Architecture**: Next.js 15 with App Router
-- **Performance Optimized**: Turbopack for fast development
 
 ## 🚀 Quick Start
 
@@ -279,13 +267,6 @@ We welcome contributions! Here's how you can help:
 5. Push to the branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Write descriptive commit messages
-- Test your changes thoroughly
-- Update documentation as needed
-- Ensure responsive design compatibility
-
 ### Areas for Contribution
 - 🐛 Bug fixes and improvements
 - ✨ New features and enhancements
@@ -303,16 +284,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Core Contributors
 - **[Karthikeya Somayajula](https://github.com/aksisonline)** - Frontend Architect
 - **[S. Abhiram Kanna](https://github.com/aksisonline)** - Backend Innovator
-
-### Want to Join?
-We're always looking for passionate developers to join our team! Check out our [About page](/about) for more information.
-
-## 🔗 Links
-
-- **[Live Demo](https://active-chat.vercel.app)** - Try the application
-- **[Documentation](docs/)** - Detailed guides and API docs
-- **[Issues](https://github.com/aksisonline/active-chat/issues)** - Report bugs or request features
-- **[Discussions](https://github.com/aksisonline/active-chat/discussions)** - Community discussions
 
 ## 🙏 Acknowledgments
 
