@@ -14,7 +14,7 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
 - **Instant Deletion**: Close your browser and your messages are gone forever
 
 ### 💬 **Real-time Communication**
-- **Instant Message Delivery**: Messages appear immediately through secure realtime broadcasting
+- **Instant Message Delivery**: Messages appear immediately through secure realtime broadcasting via PartyKit
 - **Live User Presence**: See who's currently online in your room
 - **Interactive Messaging**: Experience the magic of truly live conversations
 - **Mobile Responsive**: Secure chatting on any device, anywhere
@@ -24,7 +24,8 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
 ### Prerequisites
 - Node.js 18+ 
 - npm, yarn, pnpm, or bun package manager
-- Supabase account (for backend services)
+- Google OAuth credentials
+- PartyKit account (for deploying realtime server)
 
 ### Installation
 
@@ -37,12 +38,6 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
-   # or
-   pnpm install
-   # or
-   bun install
    ```
 
 3. **Set up environment variables**
@@ -51,24 +46,34 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
    cp .env.example .env.local
    ```
    
-   Edit `.env.local` with your Supabase credentials:
+   Edit `.env.local` with your credentials:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   # better-auth
+   BETTER_AUTH_SECRET=your-secret-key-here   # openssl rand -hex 32
+   BETTER_AUTH_URL=http://localhost:3000
+
+   # Google OAuth
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+   # PartyKit
+   NEXT_PUBLIC_PARTYKIT_HOST=localhost:1999
+
+   # App URL
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
-4. **Start the development server**
+4. **Start the PartyKit dev server** (in a separate terminal)
+   ```bash
+   npm run dev:party
+   ```
+
+5. **Start the Next.js development server**
    ```bash
    npm run dev
-   # or
-   yarn dev
-   # or
-   pnpm dev
-   # or
-   bun dev
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 🏗 Tech Stack
@@ -82,12 +87,9 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
 - **[Radix UI](https://www.radix-ui.com/)** - Accessible component primitives
 
 ### Backend & Services
-- **[Supabase](https://supabase.com/)** - Realtime Broadcasting Only
-  - Live message broadcasting (no storage)
-  - User presence detection
-  - Optional authentication (Google OAuth)
-  - Zero message persistence
-- **[Vercel](https://vercel.com/)** - Deployment platform
+- **[better-auth](https://www.better-auth.com/)** - Authentication (Google OAuth + anonymous sessions)
+- **[PartyKit](https://www.partykit.io/)** - Realtime broadcasting (live message delivery, no storage)
+- **[Cloudflare Workers](https://workers.cloudflare.com/)** - Edge deployment via OpenNext
 
 ### Development Tools
 - **[Turbopack](https://turbo.build/pack)** - Fast bundler for development
@@ -98,10 +100,9 @@ Active Chat is a super simple messaging platform that prioritizes your privacy a
 
 ### Anonymous Chat
 1. Visit the application
-2. Choose "Chat as Guest"
-3. Enter your display name
-4. Create or join a room with a secret
-5. Start chatting immediately
+2. Choose "Join Anonymously"
+3. Enter your display name and a room secret
+4. Start chatting immediately
 
 ### Authenticated Chat
 1. Click "Sign in with Google"
@@ -126,49 +127,54 @@ Active Chat features a unique dynamic gradient avatar system that generates beau
 
 For detailed documentation, see [Gradient Avatars Guide](docs/GRADIENT_AVATARS.md).
 
-## 📸 Screenshots
-
-### Welcome Screen
-![Active Chat Welcome Screen](https://github.com/user-attachments/assets/9dc6a5d9-dadb-42ce-8093-b93698bf174b)
-*Clean, modern interface with dark/light theme support*
-
-### Key Features Demo
-- **🔐 Zero-Storage Security**: Messages never hit a database - pure realtime broadcasting
-- **🚫 No Message Persistence**: Your conversations disappear when you close the browser
-- **🎨 Dynamic Avatars**: Beautiful gradient avatars generated without storing images
-- **🌓 Theme Support**: Seamless dark/light mode switching
-- **📱 Mobile Ready**: Secure chatting on all devices
-
 ## 🔧 Configuration
 
 ### Environment Variables
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
+| `BETTER_AUTH_SECRET` | Secret for better-auth session signing | Yes |
+| `BETTER_AUTH_URL` | Base URL of your deployment | Yes |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | Yes |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | Yes |
+| `NEXT_PUBLIC_PARTYKIT_HOST` | PartyKit server host | Yes |
+| `NEXT_PUBLIC_APP_URL` | Public app URL (used by auth client) | Yes |
 
-### Supabase Setup
-1. Create a new Supabase project
-2. Enable Google OAuth in Authentication settings (optional)
-3. Enable realtime broadcasting for chat functionality
-4. Configure your domain in the OAuth settings (if using authentication)
+### Google OAuth Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create an OAuth 2.0 Client ID
+3. Add `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI (and your production URL)
+4. Copy the Client ID and Secret into your `.env.local`
 
-**Note**: Active Chat only uses Supabase for realtime broadcasting and optional authentication. No messages are stored in the database - everything happens through live broadcasts that don't persist.
+### PartyKit Setup
+1. Sign up at [partykit.io](https://www.partykit.io/)
+2. Run `npm run dev:party` locally to test realtime features
+3. Deploy the realtime server: `npm run deploy:party`
+4. Update `NEXT_PUBLIC_PARTYKIT_HOST` to your deployed PartyKit host
 
 ## 🚢 Deployment
 
-### Deploy on Vercel (Recommended)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/aksisonline/active-chat)
+### Deploy on Cloudflare Workers (Recommended)
+1. Install [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/): `npm install -g wrangler`
+2. Authenticate: `wrangler login`
+3. Create a KV namespace: `wrangler kv:namespace create NEXT_CACHE_WORKERS_KV`
+4. Update `wrangler.toml` with your KV namespace ID
+5. Build and deploy:
+   ```bash
+   npm run build:cloudflare
+   npm run deploy:cloudflare
+   ```
+6. Set your environment variables via the Cloudflare dashboard or `wrangler secret put`
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on every push
+### Deploy PartyKit Realtime Server
+```bash
+npm run deploy:party
+```
+After deployment, update `NEXT_PUBLIC_PARTYKIT_HOST` to your PartyKit host URL (e.g. `active-chat.YOUR_USERNAME.partykit.dev`).
 
 ### Alternative Deployments
-- **Netlify**: Compatible with static export
-- **Railway**: Full-stack deployment
-- **DigitalOcean**: App Platform deployment
-- **Self-hosted**: Any Node.js hosting provider
+- **Vercel**: Compatible with standard Next.js deployment (use `npm run build` and `npm run start`)
+- **Netlify**: Compatible with Next.js on Netlify adapter
+- **Railway**: Full-stack deployment with Node.js runtime
 
 ## 📂 Project Structure
 
@@ -176,8 +182,9 @@ For detailed documentation, see [Gradient Avatars Guide](docs/GRADIENT_AVATARS.m
 active-chat/
 ├── app/                    # Next.js App Router pages
 │   ├── about/             # About page with team info
-│   ├── auth/              # Authentication callbacks
-│   ├── chat/              # Chat room pages
+│   ├── api/auth/          # better-auth API route handler
+│   ├── auth/              # OAuth callback redirect
+│   ├── chat/              # Chat room pages (PartyKit realtime)
 │   ├── login/             # Login and anonymous access
 │   └── page.tsx           # Home page
 ├── components/            # Reusable UI components
@@ -186,24 +193,29 @@ active-chat/
 │   └── ThemeSwitcher.tsx  # Dark/light mode toggle
 ├── docs/                  # Documentation
 ├── lib/                   # Utility functions and configurations
+│   ├── auth.ts            # better-auth server configuration
+│   ├── auth-client.ts     # better-auth React client
 │   ├── avatar-generator.ts # Gradient avatar generation
-│   ├── supabase.ts        # Supabase client
 │   └── utils.ts           # Common utilities
+├── party/                 # PartyKit realtime server
+│   └── index.ts          # Chat broadcast server
 ├── public/                # Static assets
-└── styles/                # Global styles
+├── open-next.config.ts    # OpenNext/Cloudflare configuration
+├── partykit.json          # PartyKit deployment configuration
+└── wrangler.toml          # Cloudflare Workers configuration
 ```
 
 ## 🎯 Core Components
 
 ### Chat System
-- **Zero-storage messaging** with Supabase realtime broadcasting only
+- **Zero-storage messaging** with PartyKit realtime broadcasting
 - **Room-based architecture** with secret-based access control
 - **Live user presence** and interactive communication features  
 - **Ephemeral conversations** - messages exist only while you're connected
 
-### Authentication
-- **Dual-mode system**: Anonymous and Google OAuth
-- **Session management** with localStorage for anonymous users
+### Authentication (better-auth)
+- **Dual-mode system**: Anonymous (localStorage) and Google OAuth
+- **Session management** with secure HTTP-only cookies
 - **Seamless switching** between modes
 
 ### Avatar System
@@ -214,17 +226,25 @@ active-chat/
 
 ## 🔌 API Integration
 
-### Supabase Integration
+### PartyKit Real-time Messaging
 ```typescript
-// Real-time message broadcasting (no storage)
-const channel = supabase
-  .channel(`chat:${roomSecret}`)
-  .on('broadcast', { event: 'message' }, (payload) => {
-    // Messages are received live and displayed immediately
-    // No database storage - pure realtime broadcasting
-    setMessages(prev => [...prev, payload.message])
-  })
-  .subscribe()
+// Client-side connection (partysocket)
+import PartySocket from 'partysocket'
+
+const socket = new PartySocket({
+  host: process.env.NEXT_PUBLIC_PARTYKIT_HOST,
+  room: roomSecret,
+})
+
+socket.addEventListener('message', (event) => {
+  const data = JSON.parse(event.data)
+  if (data.type === 'message') {
+    setMessages(prev => [...prev, data.payload])
+  }
+})
+
+// Send a message
+socket.send(JSON.stringify({ type: 'message', payload: message }))
 ```
 
 ### Gradient Avatar Usage
@@ -243,10 +263,14 @@ import { GradientAvatar } from '@/components/gradient-avatar'
 
 ### Scripts
 ```bash
-npm run dev          # Start development server with Turbopack
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
+npm run dev            # Start Next.js development server
+npm run dev:party      # Start PartyKit development server
+npm run build          # Build Next.js for production (Vercel/Node)
+npm run build:cloudflare  # Build for Cloudflare Workers
+npm run deploy:cloudflare # Deploy to Cloudflare Workers
+npm run deploy:party   # Deploy PartyKit server
+npm run start          # Start production server (Node)
+npm run lint           # Run ESLint
 ```
 
 ### Code Quality
@@ -288,8 +312,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) for the amazing React framework
-- [Supabase](https://supabase.com/) for backend services
-- [Vercel](https://vercel.com/) for seamless deployment
+- [better-auth](https://www.better-auth.com/) for modern, flexible authentication
+- [PartyKit](https://www.partykit.io/) for real-time multiplayer infrastructure
+- [Cloudflare Workers](https://workers.cloudflare.com/) for edge deployment
 - [Radix UI](https://www.radix-ui.com/) for accessible components
 - [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
 - The open-source community for inspiration and tools
@@ -299,3 +324,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Built with ❤️ by the Active Chat team**
 
 *Ready to start chatting? [Get started now](https://active-chat.vercel.app) and experience secure, anonymous messaging! 🚀*
+

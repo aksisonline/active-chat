@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { supabase } from '@/lib/supabase'
+import { useSession } from '@/lib/auth-client'
 import { use } from 'react'
 import { GradientAvatar } from '@/components/gradient-avatar'
 import { useVirtualKeyboard } from '@/lib/use-virtual-keyboard'
+import PartySocket from 'partysocket'
 
 type Message = {
   id: string;
@@ -27,14 +28,7 @@ type TypingUser = {
   isAnonymous?: boolean;
 }
 
-type User = {
-  id: string;
-  user_metadata?: {
-    full_name?: string;
-    avatar_url?: string;
-    picture?: string;
-  };
-} | {
+type AnonymousUser = {
   id: string;
   name: string;
   isAnonymous: true;
@@ -47,12 +41,14 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
-  const [user, setUser] = useState<User | null>(null)
+  const [anonymousUser, setAnonymousUser] = useState<AnonymousUser | null>(null)
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const router = useRouter()
+  const { data: session } = useSession()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const socketRef = useRef<PartySocket | null>(null)
   const { isKeyboardOpen } = useVirtualKeyboard()
 
   const addToRecentChannels = (secret: string) => {
@@ -67,139 +63,132 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     localStorage.setItem('recentChannels', JSON.stringify(updated))
   }
 
+  const getUserId = (): string => {
+    if (anonymousUser) return anonymousUser.id;
+    return session?.user?.id || '';
+  };
+
+  const getUserName = (): string => {
+    if (anonymousUser) return anonymousUser.name;
+    return session?.user?.name || session?.user?.email || 'Unknown User';
+  };
+
+  const getUserAvatar = (): string | undefined => {
+    if (anonymousUser) return anonymousUser.avatar || undefined;
+    return session?.user?.image || undefined;
+  };
+
   useEffect(() => {
-    const getUser = async () => {
-      // First check for anonymous user
-      const anonymousUserData = localStorage.getItem('anonymousUser');
-      if (anonymousUserData) {
-        const anonymousUser = JSON.parse(anonymousUserData);
-        setUser(anonymousUser);
-        // Add to recent channels when user enters a chat room
-        addToRecentChannels(secret);
-        return;
-      }
-
-      // Then check for authenticated user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
-        // Add to recent channels when user enters a chat room
-        addToRecentChannels(secret);
-      } else {
-        // Redirect to the join page for this specific chat room
-        router.push(`/chat/${encodeURIComponent(secret)}/join`)
-      }
+    // Load anonymous user from localStorage
+    const anonymousUserData = localStorage.getItem('anonymousUser');
+    if (anonymousUserData) {
+      setAnonymousUser(JSON.parse(anonymousUserData));
     }
-    getUser()
+  }, [])
 
-    const channel = supabase.channel(secret)
+  useEffect(() => {
+    // Wait until we know who the user is
+    const isAnon = !!localStorage.getItem('anonymousUser');
+    if (!isAnon && !session) return;
 
-    channel
-      .on('broadcast', { event: 'message' }, ({ payload }) => {
-        // Only add message if it's not from the current user (to avoid duplicates)
-        // since we add our own messages immediately to local state
+    // Redirect to join page if not authenticated
+    if (!isAnon && session === null) {
+      router.push(`/chat/${encodeURIComponent(secret)}/join`)
+      return;
+    }
+
+    addToRecentChannels(secret);
+
+    // PartySocket host should be provided without a protocol prefix.
+    // The client automatically selects ws:// or wss:// based on the page protocol.
+    const partyHost = process.env.NEXT_PUBLIC_PARTYKIT_HOST || 'localhost:1999'
+    const socket = new PartySocket({
+      host: partyHost,
+      room: secret,
+    })
+    socketRef.current = socket
+
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data)
+
+      if (data.type === 'message') {
         setMessages(current => {
-          // Check if message already exists (by id and userId combination)
-          const exists = current.some(msg => msg.id === payload.id && msg.userId === payload.userId)
-          if (exists) {
-            return current
-          }
-          return [...current, payload]
+          const exists = current.some(msg => msg.id === data.payload.id && msg.userId === data.payload.userId)
+          if (exists) return current
+          return [...current, data.payload]
         })
-      })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+      } else if (data.type === 'typing') {
         setTypingUsers(current => {
-          // If the payload has empty content, remove the user from typing list
-          if (!payload.content || payload.content.trim() === '') {
-            return current.filter(u => u.userId !== payload.userId)
+          if (!data.payload.content || data.payload.content.trim() === '') {
+            return current.filter(u => u.userId !== data.payload.userId)
           }
-          
-          // Otherwise, update or add the user to typing list
-          const index = current.findIndex(u => u.userId === payload.userId)
+          const index = current.findIndex(u => u.userId === data.payload.userId)
           if (index !== -1) {
             return [
               ...current.slice(0, index),
-              payload,
+              data.payload,
               ...current.slice(index + 1)
             ]
           }
-          return [...current, payload]
+          return [...current, data.payload]
         })
-      })
-      .subscribe()
+      }
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      socket.close()
+      socketRef.current = null
     }
-  }, [secret, router])
+  }, [secret, router, session])
 
   useEffect(() => {
-    // Focus the input field when the component loads
     if (inputRef.current && !isKeyboardOpen) {
       inputRef.current.focus()
     }
   }, [isKeyboardOpen])
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     
-    // Also scroll to bottom when keyboard opens or closes on mobile
     if (isKeyboardOpen) {
-      // Use setTimeout to ensure scroll happens after keyboard animation
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
       }, 100)
     }
   }, [messages, isKeyboardOpen])
 
-  const getUserName = (user: User | null): string => {
-    if (!user) return 'Unknown';
-    if ('isAnonymous' in user) return user.name;
-    return user.user_metadata?.full_name || 'Unknown User';
-  };
-
-  const getUserAvatar = (user: User | null): string | undefined => {
-    if (!user) return undefined;
-    if ('isAnonymous' in user) return user.avatar || undefined;
-    return user.user_metadata?.avatar_url || user.user_metadata?.picture;
-  };
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newMessage.trim() || !user) return
+    if (!newMessage.trim() || !socketRef.current) return
 
-    // Clear typing timeout and send stop typing signal
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
-    
+
     // Send stop typing signal
-    supabase.channel(secret).send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { userId: user.id, content: '' }
-    })
+    socketRef.current.send(JSON.stringify({
+      type: 'typing',
+      payload: { userId: getUserId(), content: '' }
+    }))
 
     const message: Message = {
       id: crypto.randomUUID(),
-      userId: user.id,
-      username: getUserName(user),
+      userId: getUserId(),
+      username: getUserName(),
       content: newMessage,
       timestamp: Date.now(),
-      avatar: getUserAvatar(user),
-      isAnonymous: 'isAnonymous' in user ? user.isAnonymous : false
+      avatar: getUserAvatar(),
+      isAnonymous: !!anonymousUser,
     }
 
     // Add message to local state immediately for self
     setMessages(current => [...current, message])
 
-    // Broadcast to others
-    await supabase.channel(secret).send({
-      type: 'broadcast',
-      event: 'message',
+    // Broadcast to others via PartyKit
+    socketRef.current.send(JSON.stringify({
+      type: 'message',
       payload: message
-    })
+    }))
 
     setNewMessage('')
   }
@@ -207,35 +196,30 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value)
 
-    if (!user) return;
+    if (!socketRef.current) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
 
-    // Send typing event with current content
-    supabase.channel(secret).send({
-      type: 'broadcast',
-      event: 'typing',
+    socketRef.current.send(JSON.stringify({
+      type: 'typing',
       payload: { 
-        userId: user.id, 
-        username: getUserName(user),
+        userId: getUserId(), 
+        username: getUserName(),
         content: e.target.value,
-        isAnonymous: 'isAnonymous' in user ? user.isAnonymous : false
+        isAnonymous: !!anonymousUser,
       }
-    })
+    }))
 
-    // Clear typing status after 1 second of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      supabase.channel(secret).send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { userId: user.id, content: '' }
-      })
+      socketRef.current?.send(JSON.stringify({
+        type: 'typing',
+        payload: { userId: getUserId(), content: '' }
+      }))
     }, 1000)
   }
   
-  // Helper function to focus the input field for better mobile UX
   const focusInput = () => {
     if (inputRef.current) {
       inputRef.current.focus()
@@ -246,7 +230,7 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
     <div className="flex flex-col h-full max-h-[calc(100dvh-56px)] sm:max-h-[calc(100dvh-64px)]">
       <div 
         className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 overscroll-contain ${
-          isKeyboardOpen ? 'pb-20' : 'pb-3' // Add more padding at bottom when keyboard is open
+          isKeyboardOpen ? 'pb-20' : 'pb-3'
         }`}
         onClick={focusInput}
       >
@@ -301,7 +285,7 @@ export default function ChatRoom({ params }: { params: Promise<{ secret: string 
             </div>
           ))}
         </div>
-        {typingUsers.filter(u => u.userId !== user?.id).map((typingUser) => (
+        {typingUsers.filter(u => u.userId !== getUserId()).map((typingUser) => (
           <div key={typingUser.userId} className="mb-2">
             <span className="text-muted-foreground italic text-sm">
               {typingUser.username}

@@ -4,19 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { supabase } from '@/lib/supabase'
+import { useSession, signOut } from '@/lib/auth-client'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import Logo from '@/components/logo-button'
 import { Shortcuts } from '@/components/shortcuts'
 
-type User = {
-  id: string;
-  user_metadata?: {
-    full_name?: string;
-    avatar_url?: string;
-    picture?: string;
-  };
-} | {
+type AnonymousUser = {
   id: string;
   name: string;
   isAnonymous: true;
@@ -24,7 +17,8 @@ type User = {
 }
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null)
+  const { data: session, isPending } = useSession()
+  const [anonymousUser, setAnonymousUser] = useState<AnonymousUser | null>(null)
   const [secret, setSecret] = useState('')
   const [initialAction, setInitialAction] = useState<string | null>(null)
   const router = useRouter()
@@ -41,36 +35,27 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    const getUser = async () => {
-      // Check for anonymous user first
-      const anonymousUserData = localStorage.getItem('anonymousUser');
-      if (anonymousUserData) {
-        const anonymousUser = JSON.parse(anonymousUserData);
-        setUser(anonymousUser);
-        return;
-      }
-
-      // Then check for authenticated user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
-      } else {
-        router.push('/login')
-      }
+    // Check for anonymous user
+    const anonymousUserData = localStorage.getItem('anonymousUser');
+    if (anonymousUserData) {
+      setAnonymousUser(JSON.parse(anonymousUserData));
+      return;
     }
-    getUser()
-  }, [router])
 
-  const getUserName = (user: User | null): string => {
-    if (!user) return 'Unknown';
-    if ('isAnonymous' in user) return user.name;
-    return user.user_metadata?.full_name || 'Unknown User';
+    // If no session and not loading, redirect to login
+    if (!isPending && !session) {
+      router.push('/login')
+    }
+  }, [session, isPending, router])
+
+  const getUserName = (): string => {
+    if (anonymousUser) return anonymousUser.name;
+    return session?.user?.name || session?.user?.email || 'Unknown User';
   };
 
   const handleSecretSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (secret.trim()) {
-      // Add to recent channels when manually entered
       addToRecentChannels(secret.trim())
       router.push(`/chat/${encodeURIComponent(secret)}`)
     }
@@ -93,17 +78,17 @@ export default function Home() {
   }
 
   const handleLogout = async () => {
-    if (user && 'isAnonymous' in user) {
-      // For anonymous users, just clear localStorage
+    if (anonymousUser) {
       localStorage.removeItem('anonymousUser');
+      setAnonymousUser(null);
     } else {
-      // For authenticated users, sign out from Supabase
-      await supabase.auth.signOut();
+      await signOut();
     }
     router.push('/login')
   }
 
-  if (!user) return null
+  if (isPending && !anonymousUser) return null
+  if (!session && !anonymousUser) return null
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -115,8 +100,8 @@ export default function Home() {
           <div className="text-center space-y-4">
             <Logo className="mx-auto" />
             <div>
-              <h1 className="text-2xl font-bold">Welcome, {getUserName(user)}!</h1>
-              {user && 'isAnonymous' in user && (
+              <h1 className="text-2xl font-bold">Welcome, {getUserName()}!</h1>
+              {anonymousUser && (
                 <p className="text-sm text-muted-foreground mt-1">
                   You&apos;re chatting as a guest
                 </p>
