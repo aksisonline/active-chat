@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
+import { signIn, useSession } from "@/lib/auth-client";
 import { User, MessageCircle, ArrowLeft } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import Logo from "@/components/logo-button";
@@ -19,12 +19,13 @@ export default function JoinChatPage({ params }: { params: Promise<{ secret: str
   const [mounted, setMounted] = useState(false);
   const [anonymousName, setAnonymousName] = useState("");
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setMounted(true);
     
     // Check if user is already authenticated
-    const checkAuth = async () => {
+    const checkAuth = () => {
       // Check for anonymous user first
       const anonymousUserData = localStorage.getItem('anonymousUser');
       if (anonymousUserData) {
@@ -32,26 +33,22 @@ export default function JoinChatPage({ params }: { params: Promise<{ secret: str
         return;
       }
 
-      // Then check for authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // Then check for authenticated session
+      if (session) {
         router.push(`/chat/${encodeURIComponent(secret)}`);
       }
     };
 
     checkAuth();
-  }, [secret, router]);
+  }, [secret, router, session]);
 
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
+      await signIn.social({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/chat/${encodeURIComponent(secret)}`)}`
-        }
+        callbackURL: `/chat/${encodeURIComponent(secret)}`,
       });
-      if (error) throw error;
     } finally {
       setLoading(false);
     }
