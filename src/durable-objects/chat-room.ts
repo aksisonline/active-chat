@@ -49,6 +49,7 @@ export class ChatRoom extends DurableObject {
 
     const protection = await this.ctx.storage.get<RoomProtection>('protection') ?? await this.configureRoom(null)
     if (event.type === 'join') {
+      const entered = !connection.joined
       connection.joined = true
       socket.serializeAttachment(connection)
       socket.send(JSON.stringify({
@@ -56,6 +57,15 @@ export class ChatRoom extends DurableObject {
         encrypted: protection.mode === 'encrypted',
         bootstrap: protection.mode === 'encrypted' ? protection.bootstrap : undefined,
       }))
+      if (entered) {
+        this.broadcast({
+          type: 'system',
+          id: crypto.randomUUID(),
+          content: `${connection.name} has entered the room`,
+          timestamp: Date.now(),
+        })
+        this.broadcast({ type: 'presence', online: this.onlineCount() })
+      }
       return
     }
     if (!connection.joined) return socket.close(1008, 'Join the room first')
@@ -85,6 +95,16 @@ export class ChatRoom extends DurableObject {
   }
 
   webSocketClose(socket: WebSocket, code: number, reason: string): void {
+    const connection = socket.deserializeAttachment() as Connection | null
+    if (connection?.joined) {
+      this.broadcast({
+        type: 'system',
+        id: crypto.randomUUID(),
+        content: `${connection.name} has exited the room`,
+        timestamp: Date.now(),
+      })
+      this.broadcast({ type: 'presence', online: this.onlineCount(socket) })
+    }
     socket.close(code, reason)
   }
 
@@ -109,5 +129,12 @@ export class ChatRoom extends DurableObject {
   private broadcast(event: object): void {
     const message = JSON.stringify(event)
     for (const socket of this.ctx.getWebSockets()) socket.send(message)
+  }
+
+  private onlineCount(excluding?: WebSocket): number {
+    return this.ctx.getWebSockets().filter((socket) => {
+      if (socket === excluding) return false
+      return (socket.deserializeAttachment() as Connection | null)?.joined
+    }).length
   }
 }

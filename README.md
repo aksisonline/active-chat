@@ -10,7 +10,7 @@ Active Chat is a TanStack Start application deployed to Cloudflare Workers. Each
 - **Cloudflare Workers:** serves the application, session endpoints, and the WebSocket upgrade route.
 - **One Durable Object per room:** deterministic room routing, hibernating WebSockets, and live broadcast.
 - **Cookie-only identity:** a signed, `HttpOnly`, `SameSite=Lax` cookie holds an anonymous display name and random ID. There is no OAuth provider, user database, or browser-stored auth token.
-- **Optional password rooms:** AES-GCM encrypts messages and live typing on-device. The Worker sees ciphertext and encrypted bootstrap data only; passwords, password hashes, plaintext bootstrap values, and decryption results never leave the browser.
+- **Optional password rooms (work in progress):** AES-GCM encrypts messages and live typing on-device. The Worker sees ciphertext and encrypted bootstrap data only; passwords, password hashes, plaintext bootstrap values, and decryption results never leave the browser.
 - **PWA shell cache:** the service worker caches same-origin static assets, never HTML navigation responses or `/api/*` responses. That keeps installed app startup fast without caching personalized pages or chat traffic.
 
 ## Local development

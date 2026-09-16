@@ -18,6 +18,8 @@ export type ChatEvent =
   | ChatMessage
   | { type: 'typing'; userId: string; username: string; isTyping: boolean; content?: string; encrypted?: { ciphertext: string; iv: string } }
   | { type: 'room'; encrypted: boolean; bootstrap?: { ciphertext: string; iv: string } }
+  | { type: 'system'; id: string; content: string; timestamp: number }
+  | { type: 'presence'; online: number }
 
 export async function getSession(): Promise<Session | null> {
   const response = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store' })

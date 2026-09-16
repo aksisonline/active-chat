@@ -11,6 +11,7 @@ export const Route = createFileRoute('/chat/$roomId')({
 })
 
 type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'offline'
+type DisplayMessage = ChatMessage | { type: 'system'; id: string; content: string; timestamp: number }
 
 function useChatViewport() {
   const [height, setHeight] = useState<number | null>(null)
@@ -42,7 +43,7 @@ function ChatRoom() {
   const { roomId } = Route.useParams()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null | undefined>(undefined)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<DisplayMessage[]>([])
   const [typing, setTyping] = useState<Map<string, { name: string; content: string }>>(new Map())
   const [draft, setDraft] = useState('')
   const [connection, setConnection] = useState<ConnectionState>('connecting')
@@ -50,6 +51,7 @@ function ChatRoom() {
   const [passwordInput, setPasswordInput] = useState('')
   const [roomAccess, setRoomAccess] = useState<{ encrypted: boolean; canSend: boolean } | null>(null)
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [onlineCount, setOnlineCount] = useState(0)
   const socketRef = useRef<WebSocket | null>(null)
   const retryRef = useRef<number | null>(null)
   const typingRef = useRef<number | null>(null)
@@ -115,6 +117,12 @@ function ChatRoom() {
             const canSend = !payload.encrypted || Boolean(payload.bootstrap && roomCryptoRef.current && await roomCryptoRef.current.decrypt(payload.bootstrap))
             if (active) setRoomAccess({ encrypted: payload.encrypted, canSend })
           })()
+        }
+        if (payload.type === 'presence') {
+          setOnlineCount(payload.online)
+        }
+        if (payload.type === 'system') {
+          setMessages((current) => current.some((item) => item.id === payload.id) ? current : [...current, payload])
         }
         if (payload.type === 'message') {
           void (async () => {
@@ -241,7 +249,7 @@ function ChatRoom() {
               <span className="truncate font-semibold">{roomId}</span>
               <ConnectionBadge state={connection} />
             </div>
-            <p className="truncate text-xs text-muted-foreground">Chatting as {session.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{onlineCount} {onlineCount === 1 ? 'person' : 'people'} online · Chatting as {session.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -267,6 +275,9 @@ function ChatRoom() {
             <div className="space-y-3">
               <AnimatePresence initial={false}>
                 {messages.map((message) => {
+                  if (message.type === 'system') {
+                    return <motion.p key={message.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="py-1 text-center text-xs text-muted-foreground">{message.content}</motion.p>
+                  }
                   const own = message.userId === session.id
                   return (
                     <motion.article
