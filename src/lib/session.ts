@@ -41,6 +41,13 @@ export async function createSession(name: string, secret: string): Promise<{ ses
   return { session, value: `${payload}.${signature}` }
 }
 
+export async function updateSessionName(session: ChatSession, name: string, secret: string): Promise<{ session: ChatSession; value: string }> {
+  const updated = { ...session, name }
+  const payload = toBase64Url(encoder.encode(JSON.stringify(updated)))
+  const signature = toBase64Url(await sign(payload, secret))
+  return { session: updated, value: `${payload}.${signature}` }
+}
+
 export async function readSession(request: Request, secret: string): Promise<ChatSession | null> {
   const value = request.headers
     .get('cookie')

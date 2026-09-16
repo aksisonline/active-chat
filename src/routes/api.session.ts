@@ -6,6 +6,7 @@ import {
   expiredSessionCookie,
   readSession,
   sessionCookie,
+  updateSessionName,
 } from '../lib/session'
 
 type Bindings = { SESSION_SECRET: string }
@@ -51,6 +52,17 @@ export const Route = createFileRoute('/api/session')({
             },
           },
         ),
+      PATCH: async ({ request }) => {
+        const existing = await readSession(request, secret())
+        if (!existing) return new Response('Unauthorized', { status: 401 })
+        const body = (await request.json().catch(() => null)) as { name?: unknown } | null
+        const name = typeof body?.name === 'string' ? body.name.trim().replaceAll(/\s+/g, ' ') : ''
+        if (!name || name.length > 50) {
+          return Response.json({ error: 'Enter a display name of 50 characters or fewer.' }, { status: 400 })
+        }
+        const { session, value } = await updateSessionName(existing, name, secret())
+        return Response.json({ session }, { headers: { 'Cache-Control': 'no-store', 'Set-Cookie': sessionCookie(value, request) } })
+      },
     },
   },
 })

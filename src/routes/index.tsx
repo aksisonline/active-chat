@@ -1,14 +1,18 @@
 import { motion } from 'framer-motion'
-import { Info, Lock, Shield, User } from 'lucide-react'
+import { Info, KeyRound, Lock, Pencil, Shield, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ThemeSwitcher } from '../components/theme-switcher'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { getSession, startSession, type Session } from '../lib/chat-client'
+import { configureRoom, getSession, startSession, updateSessionName, type Session } from '../lib/chat-client'
+import { createEncryptedBootstrap, createRoomCrypto } from '../lib/room-crypto'
 
-export const Route = createFileRoute('/')({ component: Home })
+export const Route = createFileRoute('/')({
+  validateSearch: (search) => ({ room: typeof search.room === 'string' ? search.room : undefined }),
+  component: Home,
+})
 
 function Home() {
   const navigate = useNavigate()
@@ -16,9 +20,24 @@ function Home() {
   const [isJoining, setIsJoining] = useState(false)
   const [name, setName] = useState('')
   const [room, setRoom] = useState('')
+  const [password, setPassword] = useState('')
+  const [editingName, setEditingName] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => { void getSession().then(setSession) }, [])
+  const { room: invitedRoom } = Route.useSearch()
+  useEffect(() => {
+    if (invitedRoom) setRoom(invitedRoom)
+    void getSession().then(setSession)
+  }, [invitedRoom])
+
+  async function enterRoom(roomId: string) {
+    if (password) {
+      const roomCrypto = await createRoomCrypto(roomId, password)
+      await configureRoom(roomId, await createEncryptedBootstrap(roomCrypto))
+      sessionStorage.setItem(`active-chat:room-password:${roomId}`, password)
+    }
+    await navigate({ to: '/chat/$roomId', params: { roomId } })
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -26,7 +45,9 @@ function Home() {
     if (!session) {
       try {
         setIsJoining(true)
-        setSession(await startSession(name))
+        const newSession = await startSession(name)
+        setSession(newSession)
+        if (invitedRoom) await enterRoom(invitedRoom)
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Could not start your session.')
       } finally {
@@ -39,7 +60,17 @@ function Home() {
       setError('Enter a room name using 1–100 letters, numbers, spaces, dots, hyphens, or underscores.')
       return
     }
-    void navigate({ to: '/chat/$roomId', params: { roomId } })
+    await enterRoom(roomId)
+  }
+
+  async function saveName() {
+    try {
+      setSession(await updateSessionName(name))
+      setEditingName(false)
+      setError('')
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not update your name.')
+    }
   }
 
   if (session === undefined) return null
@@ -62,6 +93,7 @@ function Home() {
             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">Welcome to Active Chat</h2>
               <p className="mx-auto max-w-[600px] text-sm text-muted-foreground sm:text-base md:text-lg">Where privacy meets conversation. Secure, anonymous, serverless messaging for your peace of mind.</p>
+              {invitedRoom && <p className="pt-2 text-sm font-medium text-foreground">You&apos;ve been invited to join <span className="font-mono">{invitedRoom}</span>.</p>}
             </div>
             <div className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-2 sm:py-4">
               <div className="flex items-center gap-2 text-muted-foreground"><Shield className="size-4 text-primary" /><span className="text-xs sm:text-sm">Privacy without conditions</span></div>
@@ -77,8 +109,13 @@ function Home() {
                 </div>
               ) : (
                 <>
-                  <p className="text-center text-sm text-muted-foreground">You&apos;re chatting as <strong className="text-foreground">{session.name}</strong></p>
+                  <div className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+                    <span>You&apos;re chatting as <strong className="text-foreground">{session.name}</strong></span>
+                    <button type="button" onClick={() => { setName(session.name); setEditingName(true) }} className="text-foreground hover:text-muted-foreground" aria-label="Edit nickname"><Pencil className="size-3.5" /></button>
+                  </div>
+                  {editingName && <div className="flex gap-2"><Input value={name} onChange={(event) => setName(event.target.value)} maxLength={50} aria-label="New display name" /><Button type="button" variant="outline" onClick={() => void saveName()} disabled={!name.trim()}>Save</Button></div>}
                   <div className="space-y-2"><label htmlFor="room" className="text-sm font-medium">Chat Room Secret</label><Input id="room" value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Enter or create a room secret" maxLength={100} required autoFocus /></div>
+                  <div className="space-y-2"><label htmlFor="password" className="flex items-center gap-2 text-sm font-medium"><KeyRound className="size-4" />Room password <span className="font-normal text-muted-foreground">(optional)</span></label><Input id="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Set one for a new encrypted room, or enter one to join" autoComplete="current-password" /><p className="text-xs text-muted-foreground">Passwords never leave this device. Share them separately from the invite link.</p></div>
                   <Button className="h-auto w-full py-4 text-base font-medium sm:py-6 sm:text-lg" disabled={!room.trim()}>Join Chat Room</Button>
                 </>
               )}

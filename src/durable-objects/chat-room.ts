@@ -1,15 +1,23 @@
 import { DurableObject } from 'cloudflare:workers'
 
-type Connection = {
-  id: string
-  name: string
-}
-
+type EncryptedPayload = { ciphertext: string; iv: string }
+type RoomProtection = { mode: 'open' } | { mode: 'encrypted'; bootstrap: EncryptedPayload }
+type Connection = { id: string; name: string; joined?: boolean }
 type ClientEvent =
-  | { type: 'message'; content: string }
-  | { type: 'typing'; isTyping: boolean; content: string }
+  | { type: 'join' }
+  | { type: 'message'; content?: string; encrypted?: EncryptedPayload }
+  | { type: 'typing'; isTyping: boolean; content?: string; encrypted?: EncryptedPayload }
 
 export class ChatRoom extends DurableObject {
+  async configureRoom(bootstrap: EncryptedPayload | null): Promise<RoomProtection> {
+    const existing = await this.ctx.storage.get<RoomProtection>('protection')
+    if (existing) return existing
+
+    const protection: RoomProtection = bootstrap ? { mode: 'encrypted', bootstrap } : { mode: 'open' }
+    await this.ctx.storage.put('protection', protection)
+    return protection
+  }
+
   async fetch(request: Request): Promise<Response> {
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 })
     if (request.headers.get('upgrade')?.toLowerCase() !== 'websocket') {
@@ -22,23 +30,15 @@ export class ChatRoom extends DurableObject {
     const [client, server] = Object.values(new WebSocketPair())
     server.serializeAttachment(connection)
     this.ctx.acceptWebSocket(server)
-    server.send(JSON.stringify({ type: 'ready', connectionId: connection.id }))
-
     return new Response(null, { status: 101, webSocket: client })
   }
 
   async webSocketMessage(socket: WebSocket, incoming: string | ArrayBuffer): Promise<void> {
     const connection = socket.deserializeAttachment() as Connection | null
-    if (!connection) {
-      socket.close(1008, 'Missing session')
-      return
-    }
+    if (!connection) return socket.close(1008, 'Missing session')
 
     const raw = typeof incoming === 'string' ? incoming : new TextDecoder().decode(incoming)
-    if (raw.length > 4_096) {
-      socket.close(1009, 'Message is too large')
-      return
-    }
+    if (raw.length > 8_192) return socket.close(1009, 'Message is too large')
 
     let event: ClientEvent
     try {
@@ -47,29 +47,40 @@ export class ChatRoom extends DurableObject {
       return
     }
 
+    const protection = await this.ctx.storage.get<RoomProtection>('protection') ?? await this.configureRoom(null)
+    if (event.type === 'join') {
+      connection.joined = true
+      socket.serializeAttachment(connection)
+      socket.send(JSON.stringify({
+        type: 'room',
+        encrypted: protection.mode === 'encrypted',
+        bootstrap: protection.mode === 'encrypted' ? protection.bootstrap : undefined,
+      }))
+      return
+    }
+    if (!connection.joined) return socket.close(1008, 'Join the room first')
+
     if (event.type === 'message') {
-      const content = typeof event.content === 'string' ? event.content.trim() : ''
-      if (!content) return
-      this.broadcast({
-        type: 'message',
-        id: crypto.randomUUID(),
-        userId: connection.id,
-        username: connection.name,
-        content,
-        timestamp: Date.now(),
-      })
+      if (protection.mode === 'encrypted') {
+        if (!this.isEncryptedPayload(event.encrypted)) return
+        this.broadcast({ type: 'message', id: crypto.randomUUID(), userId: connection.id, username: connection.name, encrypted: event.encrypted, timestamp: Date.now() })
+      } else {
+        const content = typeof event.content === 'string' ? event.content.trim() : ''
+        if (!content) return
+        this.broadcast({ type: 'message', id: crypto.randomUUID(), userId: connection.id, username: connection.name, content, timestamp: Date.now() })
+      }
       return
     }
 
     if (event.type === 'typing' && typeof event.isTyping === 'boolean') {
-      const content = typeof event.content === 'string' ? event.content.slice(0, 4_000) : ''
-      this.broadcast({
-        type: 'typing',
-        userId: connection.id,
-        username: connection.name,
-        isTyping: event.isTyping && Boolean(content.trim()),
-        content,
-      })
+      if (protection.mode === 'encrypted') {
+        if (!event.isTyping || this.isEncryptedPayload(event.encrypted)) {
+          this.broadcast({ type: 'typing', userId: connection.id, username: connection.name, isTyping: event.isTyping, encrypted: event.encrypted })
+        }
+      } else {
+        const content = typeof event.content === 'string' ? event.content.slice(0, 4_000) : ''
+        this.broadcast({ type: 'typing', userId: connection.id, username: connection.name, isTyping: event.isTyping && Boolean(content.trim()), content })
+      }
     }
   }
 
@@ -83,11 +94,16 @@ export class ChatRoom extends DurableObject {
     try {
       const bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0))
       const connection = JSON.parse(new TextDecoder().decode(bytes)) as Connection
-      if (typeof connection.id !== 'string' || typeof connection.name !== 'string') return null
-      return connection
+      return typeof connection.id === 'string' && typeof connection.name === 'string' ? connection : null
     } catch {
       return null
     }
+  }
+
+  private isEncryptedPayload(value: unknown): value is EncryptedPayload {
+    if (!value || typeof value !== 'object') return false
+    const payload = value as EncryptedPayload
+    return typeof payload.ciphertext === 'string' && payload.ciphertext.length <= 8_000 && typeof payload.iv === 'string' && payload.iv.length <= 32
   }
 
   private broadcast(event: object): void {

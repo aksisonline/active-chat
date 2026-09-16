@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
 import { Route as ApiChatRoomIdRouteImport } from './routes/api.chat.$roomId'
+import { Route as ApiRoomsRoomIdRouteImport } from './routes/api.rooms.$roomId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ApiChatRoomIdRoute = ApiChatRoomIdRouteImport.update({
   path: '/api/chat/$roomId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRoomsRoomIdRoute = ApiRoomsRoomIdRouteImport.update({
+  id: '/api/rooms/$roomId',
+  path: '/api/rooms/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/api/chat/$roomId': typeof ApiChatRoomIdRoute
+  '/api/rooms/$roomId': typeof ApiRoomsRoomIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/api/chat/$roomId': typeof ApiChatRoomIdRoute
+  '/api/rooms/$roomId': typeof ApiRoomsRoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
   '/api/chat/$roomId': typeof ApiChatRoomIdRoute
+  '/api/rooms/$roomId': typeof ApiRoomsRoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/api/session'
     | '/chat/$roomId'
     | '/api/chat/$roomId'
+    | '/api/rooms/$roomId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/api/session'
     | '/chat/$roomId'
     | '/api/chat/$roomId'
+    | '/api/rooms/$roomId'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/session'
     | '/chat/$roomId'
     | '/api/chat/$roomId'
+    | '/api/rooms/$roomId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   ApiSessionRoute: typeof ApiSessionRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
   ApiChatRoomIdRoute: typeof ApiChatRoomIdRoute
+  ApiRoomsRoomIdRoute: typeof ApiRoomsRoomIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/rooms/$roomId': {
+      id: '/api/rooms/$roomId'
+      path: '/api/rooms/$roomId'
+      fullPath: '/api/rooms/$roomId'
+      preLoaderRoute: typeof ApiRoomsRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSessionRoute: ApiSessionRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,
   ApiChatRoomIdRoute: ApiChatRoomIdRoute,
+  ApiRoomsRoomIdRoute: ApiRoomsRoomIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
