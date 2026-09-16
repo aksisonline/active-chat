@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ChatRoomIdRouteImport } from './routes/chat.$roomId'
@@ -18,6 +19,11 @@ import { Route as ApiChatRoomIdRouteImport } from './routes/api.chat.$roomId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -43,6 +49,7 @@ const ApiChatRoomIdRoute = ApiChatRoomIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/login': typeof LoginRoute
   '/api/session': typeof ApiSessionRoute
   '/chat/$roomId': typeof ChatRoomIdRoute
@@ -66,12 +75,24 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/api/session' | '/chat/$roomId' | '/api/chat/$roomId'
+    | '/'
+    | '/about'
+    | '/login'
+    | '/api/session'
+    | '/chat/$roomId'
+    | '/api/chat/$roomId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/api/session' | '/chat/$roomId' | '/api/chat/$roomId'
+  to:
+    | '/'
+    | '/about'
+    | '/login'
+    | '/api/session'
+    | '/chat/$roomId'
+    | '/api/chat/$roomId'
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/login'
     | '/api/session'
     | '/chat/$roomId'
@@ -80,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   LoginRoute: typeof LoginRoute
   ApiSessionRoute: typeof ApiSessionRoute
   ChatRoomIdRoute: typeof ChatRoomIdRoute
@@ -93,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -128,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   LoginRoute: LoginRoute,
   ApiSessionRoute: ApiSessionRoute,
   ChatRoomIdRoute: ChatRoomIdRoute,

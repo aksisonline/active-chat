@@ -8,7 +8,7 @@ export function ThemeSwitcher() {
     <button
       type="button"
       onClick={() => setTheme(dark ? 'light' : 'dark')}
-      className="grid size-11 place-items-center rounded-xl border border-white/10 bg-white/10 text-current transition hover:scale-105 hover:bg-white/20 active:scale-95"
+      className="grid size-9 place-items-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-accent"
       aria-label={`Switch to ${dark ? 'light' : 'dark'} mode`}
     >
       {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}

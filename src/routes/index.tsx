@@ -1,187 +1,93 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Clock3, LogOut, MessageCirclePlus, Sparkles, X } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Info, Lock, Shield, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { endSession, getSession, startSession, type Session } from '../lib/chat-client'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ThemeSwitcher } from '../components/theme-switcher'
+import { Button } from '../components/ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { getSession, startSession, type Session } from '../lib/chat-client'
 
-type RecentRoom = { name: string; lastVisited: number }
-
-export const Route = createFileRoute('/')({
-  component: Home,
-})
+export const Route = createFileRoute('/')({ component: Home })
 
 function Home() {
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null | undefined>(undefined)
+  const [isJoining, setIsJoining] = useState(false)
   const [name, setName] = useState('')
   const [room, setRoom] = useState('')
-  const [recentRooms, setRecentRooms] = useState<RecentRoom[]>([])
   const [error, setError] = useState('')
-  const [joining, setJoining] = useState(false)
 
-  useEffect(() => {
-    void getSession().then(setSession)
-    try {
-      setRecentRooms(JSON.parse(localStorage.getItem('active-chat:recent-rooms') ?? '[]') as RecentRoom[])
-    } catch {
-      localStorage.removeItem('active-chat:recent-rooms')
-    }
-  }, [])
-
-  function enterRoom(roomName: string) {
-    const normalized = roomName.trim().replaceAll(/\s+/g, ' ')
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9 _.-]{0,98}[a-zA-Z0-9]$|^[a-zA-Z0-9]$/.test(normalized)) {
-      setError('Use 1–100 letters, numbers, spaces, dots, hyphens, or underscores.')
-      return
-    }
-    const next = [{ name: normalized, lastVisited: Date.now() }, ...recentRooms.filter((item) => item.name !== normalized)].slice(0, 5)
-    setRecentRooms(next)
-    localStorage.setItem('active-chat:recent-rooms', JSON.stringify(next))
-    void navigate({ to: '/chat/$roomId', params: { roomId: normalized } })
-  }
+  useEffect(() => { void getSession().then(setSession) }, [])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
     if (!session) {
-      setJoining(true)
       try {
-        setSession(await startSession(name.trim()))
+        setIsJoining(true)
+        setSession(await startSession(name))
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Could not start your session.')
       } finally {
-        setJoining(false)
+        setIsJoining(false)
       }
       return
     }
-    enterRoom(room)
+    const roomId = room.trim().replaceAll(/\s+/g, ' ')
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9 _.-]{0,98}[a-zA-Z0-9]$|^[a-zA-Z0-9]$/.test(roomId)) {
+      setError('Enter a room name using 1–100 letters, numbers, spaces, dots, hyphens, or underscores.')
+      return
+    }
+    void navigate({ to: '/chat/$roomId', params: { roomId } })
   }
 
-  async function signOut() {
-    await endSession()
-    setSession(null)
-  }
-
-  if (session === undefined) return <div className="min-h-dvh bg-background" />
-
+  if (session === undefined) return null
   return (
-    <main className="min-h-dvh overflow-hidden bg-background px-4 py-4 text-foreground sm:p-8">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,hsl(var(--primary)/.16),transparent_30%),radial-gradient(circle_at_100%_100%,hsl(var(--primary)/.1),transparent_28%)]" />
-      <div className="relative mx-auto flex min-h-[calc(100dvh-2rem)] max-w-4xl flex-col">
-        <header className="flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <img src="/ac_logo_light.svg" width="32" height="32" alt="" className="dark:hidden" />
-            <img src="/ac_logo_dark.svg" width="32" height="32" alt="" className="hidden dark:block" />
-            Active Chat
-          </a>
-          <ThemeSwitcher />
-        </header>
-
-        <section className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center py-10">
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              <Sparkles className="size-3.5" /> Live when you are
-            </div>
-            <h1 className="max-w-lg text-4xl font-bold tracking-tight sm:text-5xl">
-              A room is all you need to start talking.
-            </h1>
-            <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground">
-              Pick a display name once, then create or join a private room. Messages exist only while people are connected.
-            </p>
-          </motion.div>
-
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.35 }}
-            onSubmit={submit}
-            className="mt-8 rounded-3xl border border-border bg-card/80 p-5 shadow-2xl shadow-black/5 backdrop-blur sm:p-6"
-          >
-            <AnimatePresence mode="wait">
-              {!session ? (
-                <motion.div key="identity" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-                  <label htmlFor="display-name" className="text-sm font-semibold">Choose a display name</label>
-                  <p className="mt-1 text-sm text-muted-foreground">This is stored in a signed session cookie, not an account.</p>
-                  <input
-                    id="display-name"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    maxLength={50}
-                    autoComplete="nickname"
-                    autoFocus
-                    placeholder="Your name"
-                    className="mt-4 h-12 w-full rounded-xl border border-input bg-background px-4 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                  <button disabled={!name.trim() || joining} className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
-                    {joining ? 'Starting…' : <>Continue <ArrowRight className="size-4" /></>}
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div key="room" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">You’re chatting as</p>
-                      <p className="font-semibold">{session.name}</p>
-                    </div>
-                    <button type="button" onClick={() => void signOut()} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground">
-                      <LogOut className="size-4" /> Reset
-                    </button>
-                  </div>
-                  <label htmlFor="room-name" className="mt-5 block text-sm font-semibold">Create or join a room</label>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      id="room-name"
-                      value={room}
-                      onChange={(event) => setRoom(event.target.value)}
-                      maxLength={100}
-                      autoComplete="off"
-                      autoFocus
-                      placeholder="Room name"
-                      className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-background px-4 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    <button aria-label="Enter room" className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition hover:scale-105 active:scale-95">
-                      <ArrowRight className="size-5" />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
-          </motion.form>
-
-          {session && recentRooms.length > 0 && (
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-7">
-              <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><Clock3 className="size-4" /> Recent rooms</div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {recentRooms.map((item) => (
-                  <div key={item.name} className="group flex items-center rounded-2xl border border-border bg-card/50 p-2">
-                    <button type="button" onClick={() => enterRoom(item.name)} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-muted">
-                      <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><MessageCirclePlus className="size-4" /></span>
-                      <span className="min-w-0"><span className="block truncate text-sm font-medium">{item.name}</span><span className="block text-xs text-muted-foreground">{formatAgo(item.lastVisited)}</span></span>
-                    </button>
-                    <button type="button" onClick={() => {
-                      const next = recentRooms.filter((roomItem) => roomItem.name !== item.name)
-                      setRecentRooms(next)
-                      localStorage.setItem('active-chat:recent-rooms', JSON.stringify(next))
-                    }} className="grid size-9 place-items-center rounded-lg text-muted-foreground opacity-100 transition hover:bg-muted hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100" aria-label={`Remove ${item.name}`}>
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </motion.section>
-          )}
-        </section>
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-background to-background/80 px-4 py-8 sm:px-6 sm:py-12">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
+      <Link to="/about" className="absolute left-4 top-4 z-10"><Button variant="outline" size="icon"><Info className="size-5" /><span className="sr-only">About Active Chat</span></Button></Link>
+      <div className="absolute right-4 top-4 z-10"><ThemeSwitcher /></div>
+
+      <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative mb-6 text-center text-3xl font-bold text-primary sm:mb-8 sm:text-4xl">
+        {session ? 'ACTIVE CHAT' : 'SECURE · ACTIVE · PRIVATE'}
+      </motion.h1>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="relative w-full max-w-lg">
+        <Card className="border-border bg-background/40 backdrop-blur-xl">
+          <CardContent className="space-y-6 p-6 sm:space-y-8 sm:p-8">
+            <div className="flex justify-center pt-2"><img src="/ac_logo_light.svg" alt="Active Chat" width="60" height="60" className="dark:hidden" /><img src="/ac_logo_dark.svg" alt="Active Chat" width="60" height="60" className="hidden dark:block" /></div>
+            <div className="space-y-2 text-center">
+              <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl md:text-4xl">Welcome to Active Chat</h2>
+              <p className="mx-auto max-w-[600px] text-sm text-muted-foreground sm:text-base md:text-lg">Where privacy meets conversation. Secure, anonymous, serverless messaging for your peace of mind.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-2 sm:py-4">
+              <div className="flex items-center gap-2 text-muted-foreground"><Shield className="size-4 text-primary" /><span className="text-xs sm:text-sm">Privacy without conditions</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Lock className="size-4 text-primary" /><span className="text-xs sm:text-sm">No chats saved</span></div>
+            </div>
+            <form onSubmit={submit} className="space-y-4">
+              {!session ? (
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-sm font-medium">Display Name</label>
+                  <Input id="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Enter your display name" maxLength={50} required autoFocus />
+                  <p className="text-xs text-muted-foreground">Saved in a signed cookie only. No account required.</p>
+                  <Button className="h-auto w-full py-4 text-base font-medium sm:py-6 sm:text-lg" disabled={!name.trim() || isJoining}><User className="size-5" />{isJoining ? 'Starting…' : 'Chat Anonymously'}</Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-center text-sm text-muted-foreground">You&apos;re chatting as <strong className="text-foreground">{session.name}</strong></p>
+                  <div className="space-y-2"><label htmlFor="room" className="text-sm font-medium">Chat Room Secret</label><Input id="room" value={room} onChange={(event) => setRoom(event.target.value)} placeholder="Enter or create a room secret" maxLength={100} required autoFocus /></div>
+                  <Button className="h-auto w-full py-4 text-base font-medium sm:py-6 sm:text-lg" disabled={!room.trim()}>Join Chat Room</Button>
+                </>
+              )}
+              {error && <p role="alert" className="text-center text-sm text-destructive">{error}</p>}
+            </form>
+            <p className="text-center text-[10px] text-muted-foreground sm:text-xs">Private rooms are live only while people are connected.</p>
+          </CardContent>
+        </Card>
+      </motion.div>
     </main>
   )
-}
-
-function formatAgo(timestamp: number): string {
-  const minutes = Math.floor((Date.now() - timestamp) / 60_000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`
-  return `${Math.floor(minutes / 1440)}d ago`
 }

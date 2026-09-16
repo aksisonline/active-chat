@@ -120,15 +120,15 @@ function ChatRoom() {
   const otherTypers = [...typing.values()]
   return (
     <main className="flex h-dvh flex-col bg-background text-foreground">
-      <header className="safe-top flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/90 px-3 backdrop-blur-xl sm:px-5">
+      <header className="safe-top flex h-16 shrink-0 items-center justify-between bg-primary px-3 text-primary-foreground shadow-md sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <Link to="/" className="grid size-10 shrink-0 place-items-center rounded-xl transition hover:bg-muted" aria-label="Leave room"><ArrowLeft className="size-5" /></Link>
+          <Link to="/" className="grid size-10 shrink-0 place-items-center rounded-md transition hover:bg-primary-foreground/15" aria-label="Leave room"><ArrowLeft className="size-5" /></Link>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate font-semibold">{roomId}</span>
               <ConnectionBadge state={connection} />
             </div>
-            <p className="truncate text-xs text-muted-foreground">Chatting as {session.name}</p>
+            <p className="truncate text-xs text-primary-foreground/70">Chatting as {session.name}</p>
           </div>
         </div>
         <ThemeSwitcher />
@@ -161,7 +161,7 @@ function ChatRoom() {
                         <span>{own ? 'You' : message.username}</span>
                         <time>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
                       </div>
-                      <p className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-[15px] leading-6 shadow-sm ${own ? 'rounded-tr-sm bg-primary text-primary-foreground' : 'rounded-tl-sm bg-muted'}`}>{message.content}</p>
+                                  <p className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-[15px] leading-6 ${own ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{message.content}</p>
                     </div>
                   </motion.article>
                 )
@@ -179,7 +179,7 @@ function ChatRoom() {
         </div>
 
         <form onSubmit={send} className="safe-bottom border-t border-border bg-background/95 p-3 backdrop-blur-xl sm:p-4">
-          <div className="flex items-end gap-2 rounded-2xl border border-input bg-card p-2 shadow-lg shadow-black/5 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <div className="flex items-end gap-2 rounded-lg border border-input bg-card p-2 shadow-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
             <textarea
               value={draft}
               onChange={(event) => updateDraft(event.target.value)}
@@ -196,7 +196,7 @@ function ChatRoom() {
               className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-[16px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
               aria-label="Message"
             />
-            <button type="submit" disabled={!draft.trim() || connection !== 'connected'} className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
+            <button type="submit" disabled={!draft.trim() || connection !== 'connected'} className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
               <SendHorizontal className="size-4" />
             </button>
           </div>
