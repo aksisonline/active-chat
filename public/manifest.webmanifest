@@ -1,0 +1,15 @@
+{
+  "name": "Active Chat",
+  "short_name": "Active Chat",
+  "description": "Ephemeral, real-time private chat rooms.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    { "src": "/ac_logo_dark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Create or join", "short_name": "Chat", "url": "/" }
+  ]
+}
