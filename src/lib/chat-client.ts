@@ -15,7 +15,7 @@ export type ChatMessage = {
 
 export type ChatEvent =
   | ChatMessage
-  | { type: 'typing'; userId: string; username: string; isTyping: boolean }
+  | { type: 'typing'; userId: string; username: string; isTyping: boolean; content: string }
   | { type: 'ready'; connectionId: string }
 
 export async function getSession(): Promise<Session | null> {

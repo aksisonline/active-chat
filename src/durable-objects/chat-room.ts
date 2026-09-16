@@ -7,7 +7,7 @@ type Connection = {
 
 type ClientEvent =
   | { type: 'message'; content: string }
-  | { type: 'typing'; isTyping: boolean }
+  | { type: 'typing'; isTyping: boolean; content: string }
 
 export class ChatRoom extends DurableObject {
   async fetch(request: Request): Promise<Response> {
@@ -62,11 +62,13 @@ export class ChatRoom extends DurableObject {
     }
 
     if (event.type === 'typing' && typeof event.isTyping === 'boolean') {
+      const content = typeof event.content === 'string' ? event.content.slice(0, 4_000) : ''
       this.broadcast({
         type: 'typing',
         userId: connection.id,
         username: connection.name,
-        isTyping: event.isTyping,
+        isTyping: event.isTyping && Boolean(content.trim()),
+        content,
       })
     }
   }

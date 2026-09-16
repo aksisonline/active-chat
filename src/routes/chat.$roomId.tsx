@@ -16,7 +16,7 @@ function ChatRoom() {
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [typing, setTyping] = useState<Map<string, string>>(new Map())
+  const [typing, setTyping] = useState<Map<string, { name: string; content: string }>>(new Map())
   const [draft, setDraft] = useState('')
   const [connection, setConnection] = useState<ConnectionState>('connecting')
   const socketRef = useRef<WebSocket | null>(null)
@@ -64,7 +64,7 @@ function ChatRoom() {
         if (payload.type === 'typing' && payload.userId !== session.id) {
           setTyping((current) => {
             const next = new Map(current)
-            if (payload.isTyping) next.set(payload.userId, payload.username)
+            if (payload.isTyping) next.set(payload.userId, { name: payload.username, content: payload.content })
             else next.delete(payload.userId)
             return next
           })
@@ -90,14 +90,14 @@ function ChatRoom() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [messages, typing])
+  }, [messages])
 
   function send(event: React.FormEvent) {
     event.preventDefault()
     const content = draft.trim()
     if (!content || socketRef.current?.readyState !== WebSocket.OPEN) return
     socketRef.current.send(JSON.stringify({ type: 'message', content }))
-    socketRef.current.send(JSON.stringify({ type: 'typing', isTyping: false }))
+    socketRef.current.send(JSON.stringify({ type: 'typing', isTyping: false, content: '' }))
     if (typingRef.current) window.clearTimeout(typingRef.current)
     setDraft('')
   }
@@ -106,11 +106,11 @@ function ChatRoom() {
     setDraft(value)
     const socket = socketRef.current
     if (socket?.readyState !== WebSocket.OPEN) return
-    socket.send(JSON.stringify({ type: 'typing', isTyping: Boolean(value.trim()) }))
+    socket.send(JSON.stringify({ type: 'typing', isTyping: Boolean(value.trim()), content: value }))
     if (typingRef.current) window.clearTimeout(typingRef.current)
     typingRef.current = window.setTimeout(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({ type: 'typing', isTyping: false }))
+        socketRef.current.send(JSON.stringify({ type: 'typing', isTyping: false, content: '' }))
       }
     }, 1_200)
   }
@@ -120,15 +120,15 @@ function ChatRoom() {
   const otherTypers = [...typing.values()]
   return (
     <main className="flex h-dvh flex-col bg-background text-foreground">
-      <header className="safe-top flex h-16 shrink-0 items-center justify-between bg-primary px-3 text-primary-foreground shadow-md sm:px-5">
+      <header className="safe-top flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 text-foreground shadow-sm backdrop-blur-xl sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <Link to="/" className="grid size-10 shrink-0 place-items-center rounded-md transition hover:bg-primary-foreground/15" aria-label="Leave room"><ArrowLeft className="size-5" /></Link>
+          <Link to="/" className="grid size-10 shrink-0 place-items-center rounded-md transition hover:bg-muted" aria-label="Leave room"><ArrowLeft className="size-5" /></Link>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate font-semibold">{roomId}</span>
               <ConnectionBadge state={connection} />
             </div>
-            <p className="truncate text-xs text-primary-foreground/70">Chatting as {session.name}</p>
+            <p className="truncate text-xs text-muted-foreground">Chatting as {session.name}</p>
           </div>
         </div>
         <ThemeSwitcher />
@@ -138,7 +138,7 @@ function ChatRoom() {
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
           {messages.length === 0 && (
             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto mt-12 max-w-sm text-center">
-              <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary"><SendHorizontal className="size-6" /></div>
+              <div className="mx-auto grid size-14 place-items-center rounded-lg bg-muted text-foreground"><SendHorizontal className="size-6" /></div>
               <h1 className="mt-4 text-lg font-semibold">The room is ready.</h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">Send the first message. Nothing is retained after everyone leaves.</p>
             </motion.div>
@@ -161,7 +161,7 @@ function ChatRoom() {
                         <span>{own ? 'You' : message.username}</span>
                         <time>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
                       </div>
-                                  <p className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-[15px] leading-6 ${own ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{message.content}</p>
+                      <p className={`whitespace-pre-wrap break-words rounded-lg border px-3 py-2 text-[15px] leading-6 ${own ? 'border-zinc-700 bg-zinc-800 text-zinc-100 dark:border-zinc-700 dark:bg-zinc-800' : 'border-zinc-200 bg-zinc-100 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'}`}>{message.content}</p>
                     </div>
                   </motion.article>
                 )
@@ -170,9 +170,10 @@ function ChatRoom() {
           </div>
           <AnimatePresence>
             {otherTypers.length > 0 && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-4 text-xs text-muted-foreground">
-                {otherTypers.join(', ')} {otherTypers.length === 1 ? 'is' : 'are'} typing<span className="typing-dots">...</span>
-              </motion.p>
+              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-4 max-w-[min(82%,34rem)] rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{otherTypers.map((user) => user.name).join(', ')}</span> {otherTypers.length === 1 ? 'is' : 'are'} typing:
+                <span className="ml-1 break-words text-foreground/80">{otherTypers.map((user) => user.content).join(' · ')}</span>
+              </motion.div>
             )}
           </AnimatePresence>
           <div ref={endRef} />
@@ -196,7 +197,7 @@ function ChatRoom() {
               className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-[16px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
               aria-label="Message"
             />
-            <button type="submit" disabled={!draft.trim() || connection !== 'connected'} className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
+            <button type="submit" disabled={!draft.trim() || connection !== 'connected'} className="grid size-10 shrink-0 place-items-center rounded-md bg-zinc-800 text-zinc-100 transition hover:bg-zinc-700 dark:bg-zinc-700 dark:hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
               <SendHorizontal className="size-4" />
             </button>
           </div>
@@ -216,6 +217,5 @@ function ConnectionBadge({ state }: { state: ConnectionState }) {
 }
 
 function Avatar({ name }: { name: string }) {
-  const color = ['bg-violet-500', 'bg-sky-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500'][[...name].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 5]
-  return <span className={`grid size-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${color}`}>{name.slice(0, 1).toUpperCase()}</span>
+  return <span className="grid size-9 shrink-0 place-items-center rounded-full bg-zinc-200 text-xs font-bold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-100">{name.slice(0, 1).toUpperCase()}</span>
 }
